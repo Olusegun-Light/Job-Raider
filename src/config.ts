@@ -96,6 +96,45 @@ export function loadConfig(opts: { configDir?: string } = {}): AppConfig {
   };
 }
 
+/**
+ * Load a .env file into process.env, if one exists.
+ *
+ * Node does not read .env on its own, and the README tells the user to create
+ * one, so without this their credentials would simply be ignored and the run
+ * would report missing secrets. Values already present in the real
+ * environment win: a CI secret must beat a stale .env in the working copy.
+ *
+ * Returns whether anything was actually loaded.
+ */
+export function loadDotEnv(path: string = join(process.cwd(), '.env')): boolean {
+  let contents: string;
+  try {
+    contents = readFileSync(path, 'utf8');
+  } catch {
+    return false;
+  }
+
+  let loaded = 0;
+  for (const line of contents.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed.length === 0 || trimmed.startsWith('#')) continue;
+
+    const eq = trimmed.indexOf('=');
+    if (eq <= 0) continue;
+
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    // Strip one layer of matching quotes, as dotenv does.
+    if (value.length >= 2 && /^(".*"|'.*')$/s.test(value)) value = value.slice(1, -1);
+
+    if (!key || process.env[key] !== undefined) continue;
+    process.env[key] = value;
+    loaded += 1;
+  }
+
+  return loaded > 0;
+}
+
 const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
 export type LogLevel = (typeof LOG_LEVELS)[number];
 

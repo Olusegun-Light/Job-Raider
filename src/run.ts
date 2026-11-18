@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { parseArgs, USAGE } from './cli.js';
-import { loadConfig, loadEnv } from './config.js';
+import { loadConfig, loadDotEnv, loadEnv } from './config.js';
 import { createLogger } from './util/log.js';
 import { runPipeline } from './pipeline.js';
 import { allSources } from './sources/index.js';
@@ -29,8 +29,10 @@ export type RunDeps = {
  * the only signal is a red dot in the Actions tab.
  */
 export async function runCli(argv: string[], deps: RunDeps = {}): Promise<number> {
-  const rawEnv = deps.env ?? process.env;
   const cwd = process.cwd();
+  // Only for a real process run: tests pass deps.env explicitly.
+  const loadedDotEnv = deps.env ? false : loadDotEnv(join(cwd, '.env'));
+  const rawEnv = deps.env ?? process.env;
 
   if (argv.includes('--help') || argv.includes('-h')) {
     console.log(USAGE);
@@ -47,6 +49,7 @@ export async function runCli(argv: string[], deps: RunDeps = {}): Promise<number
     return 1;
   }
   const log = createLogger({ level: env.logLevel });
+  if (loadedDotEnv) log.debug('loaded credentials from .env');
 
   let stage = 'startup';
   let deliverer: Deliverer;
