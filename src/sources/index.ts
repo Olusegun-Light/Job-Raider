@@ -5,6 +5,7 @@ import type { Job, SourceName } from '../types.js';
 import { greenhouseSource } from './greenhouse.js';
 import { leverSource } from './lever.js';
 import { ashbySource } from './ashby.js';
+import { serperSource } from './serper.js';
 
 export type SourceContext = {
   config: AppConfig;
@@ -30,6 +31,5 @@ export type Source = {
 
 /** Every live source, in the order they appear in run summaries. */
 export function allSources(): Source[] {
-  // serperSource() is registered in milestone 3.
-  return [greenhouseSource(), leverSource(), ashbySource()];
+  return [serperSource(), greenhouseSource(), leverSource(), ashbySource()];
 }

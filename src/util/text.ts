@@ -76,7 +76,7 @@ export function htmlToText(html: string | null | undefined): string | null {
     .replace(/<[^>]+>/g, ' ');
 
   const text = decodeEntities(stripped)
-    .replace(/[ \t ]+/g, ' ')
+    .replace(/[^\S\n]+/g, ' ')
     .split('\n')
     .map((line) => line.trim())
     .join('\n')
