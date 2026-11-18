@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { join } from 'node:path';
 import { parseArgs, USAGE } from './cli.js';
 import { loadConfig, loadEnv } from './config.js';
 import { createLogger } from './util/log.js';
@@ -6,6 +7,7 @@ import { runPipeline } from './pipeline.js';
 import { allSources } from './sources/index.js';
 import { sampleSource } from './sources/sample.js';
 import { createConsoleDeliverer } from './deliver/console.js';
+import { loadSponsorIndex } from './sponsorship.js';
 import type { Deliverer } from './types.js';
 
 async function main(argv: string[]): Promise<number> {
@@ -25,6 +27,12 @@ async function main(argv: string[]): Promise<number> {
     sources = [sampleSource()];
   }
 
+  // Optional enrichment: absent until `npm run update-sponsors` is run.
+  const sponsorPath = join(process.cwd(), 'data', 'uk-sponsors.csv');
+  const sponsorIndex = loadSponsorIndex(sponsorPath);
+  if (sponsorIndex) log.info('uk sponsor register loaded', { names: sponsorIndex.names.size });
+  else log.debug('no uk sponsor register at data/uk-sponsors.csv; skipping that check');
+
   // Live delivery arrives in milestone 6; until then every run prints.
   const deliverer: Deliverer = createConsoleDeliverer();
 
@@ -37,6 +45,7 @@ async function main(argv: string[]): Promise<number> {
       log,
       deliverer,
       now: new Date(),
+      sponsorIndex,
     });
     return 0;
   } catch (error) {

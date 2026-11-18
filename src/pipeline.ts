@@ -3,7 +3,9 @@ import type { CliOptions } from './cli.js';
 import type { Logger } from './util/log.js';
 import type { Source, SourceContext } from './sources/index.js';
 import type { Deliverer, Job, RunStats, ScoredJob, SourceStats } from './types.js';
-import { bucketFor } from './filter.js';
+import { bucketFor, jobText, passesFilter } from './filter.js';
+import { scoreJob } from './score.js';
+import { detectSponsorship, isLicensedSponsor, type SponsorIndex } from './sponsorship.js';
 
 export type PipelineDeps = {
   sources: Source[];
@@ -13,6 +15,8 @@ export type PipelineDeps = {
   log: Logger;
   deliverer: Deliverer;
   now: Date;
+  /** UK Home Office register, when data/uk-sponsors.csv is present. */
+  sponsorIndex?: SponsorIndex | null;
 };
 
 type SourceOutcome = { stats: SourceStats; jobs: Job[]; credits?: number | undefined };
@@ -29,6 +33,8 @@ function errorMessage(error: unknown): string {
  */
 export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
   const { sources, config, options, env, log, deliverer, now } = deps;
+  const sponsorIndex = deps.sponsorIndex ?? null;
+  const minScore = options.minScore ?? config.rules.minScore;
   const started = Date.now();
 
   const enabled = sources.filter((s) => options.sources.includes(s.name));
@@ -61,27 +67,64 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
   );
 
   const credits = results.map((r) => r.credits).filter((c): c is number => c !== undefined);
-  const withBucket = (job: Job): ScoredJob => ({
-    ...job,
-    bucket: bucketFor(job, config.rules.locationTargets),
-  });
+  /**
+   * filter -> enrich (sponsorship, register) -> score -> cut.
+   *
+   * A UK job that states it cannot sponsor is dropped by default: it is
+   * unreachable from Lagos however well it scores. --keep-no-sponsor keeps it.
+   */
+  const evaluate = (job: Job): ScoredJob | null => {
+    const verdict = passesFilter(job, config.rules);
+    if (!verdict.passed) {
+      log.debug('filtered out', { title: job.title, reason: verdict.reason });
+      return null;
+    }
+
+    const bucket = bucketFor(job, config.rules.locationTargets);
+    const sponsorship = detectSponsorship(jobText(job));
+    const ukSponsorLicensed = sponsorIndex ? isLicensedSponsor(job.company, sponsorIndex) : null;
+
+    if (bucket === 'uk' && sponsorship === 'no' && !options.keepNoSponsor) {
+      log.debug('dropped: UK role states it cannot sponsor', {
+        title: job.title,
+        company: job.company,
+      });
+      return null;
+    }
+
+    const enriched: Job = {
+      ...job,
+      sponsorship,
+      ukSponsorLicensed,
+      matchedKeywords: verdict.matchedKeywords,
+    };
+    const score = scoreJob(enriched, config.rules, now);
+    if (score < minScore) {
+      log.debug('dropped: below minScore', { title: job.title, score, minScore });
+      return null;
+    }
+
+    return { ...enriched, score, bucket };
+  };
 
   // Attribute counts to the source that produced the job, not to job.source:
   // a Serper hit on a Greenhouse board still belongs to the Serper run.
   const scored: ScoredJob[] = [];
   const perSource: SourceStats[] = [];
   for (const result of results) {
-    const jobs = result.jobs.map(withBucket);
+    const jobs = result.jobs.map(evaluate).filter((job): job is ScoredJob => job !== null);
     result.stats.passedFilter = jobs.length;
     result.stats.new = jobs.length;
     perSource.push(result.stats);
     scored.push(...jobs);
   }
 
+  scored.sort((a, b) => b.score - a.score);
+
   const stats: RunStats = {
     startedAt: new Date(started).toISOString(),
     durationMs: Date.now() - started,
-    scanned: scored.length,
+    scanned: results.reduce((total, r) => total + r.jobs.length, 0),
     delivered: scored.length,
     perSource,
     serperCredits: credits.length > 0 ? credits.reduce((a, b) => a + b, 0) : null,
