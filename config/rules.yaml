@@ -1,0 +1,56 @@
+# Filter, scoring and location rules. See JOB_RADAR_PLAN.md §6.
+
+titleInclude:
+  [
+    backend,
+    back-end,
+    'back end',
+    'software engineer',
+    node,
+    'api engineer',
+    'platform engineer',
+    'full stack',
+    fullstack,
+  ]
+
+# Note: "senior" is deliberately NOT excluded - many senior roles fit 4+ years.
+titleExclude:
+  [
+    staff,
+    principal,
+    'head of',
+    director,
+    manager,
+    intern,
+    'front end',
+    frontend,
+    ios,
+    android,
+    'data scientist',
+    'machine learning',
+  ]
+
+# Checked against title + description/snippet.
+mustMatchAny: [node, 'node.js', nodejs, typescript, javascript, nestjs, express]
+
+locationTargets:
+  uk: [uk, 'united kingdom', london, manchester, edinburgh, england, scotland]
+  remote: [remote, emea, europe, 'anywhere', worldwide, africa, nigeria]
+  lagos: [lagos, nigeria]
+
+maxAgeHours: 48
+minScore: 4
+
+weights:
+  titleBackend: 3
+  titleNodeTs: 3
+  descriptionNodeTs: 2
+  sponsorshipYes: 4
+  ukSponsorLicensed: 2
+  remoteOpen: 3
+  domainMatch: 1
+  domainMatchMax: 2
+  postedLast24h: 1
+
+# Domain bonus: +domainMatch each, capped at domainMatchMax.
+domains: [fintech, payments, banking, health, healthcare, telecom, telco]

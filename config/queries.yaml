@@ -1,0 +1,22 @@
+# Boolean Google queries run through Serper.dev (never google.com directly).
+# Keep this list to ~5-10 queries so daily credit use stays low.
+queries:
+  - name: uk-sponsor-ats
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com) ("backend engineer" OR "backend developer" OR "software engineer") ("node.js" OR nodejs OR typescript) ("visa sponsorship" OR "skilled worker visa") (London OR UK OR "United Kingdom")'
+    gl: uk
+
+  - name: uk-backend-node
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) "backend" ("node.js" OR typescript) (London OR "United Kingdom")'
+    gl: uk
+
+  - name: remote-emea
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) (remote) (EMEA OR Africa OR worldwide OR anywhere)'
+    gl: us
+
+  - name: remote-fintech
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com) backend ("node.js" OR typescript) (fintech OR payments) remote'
+    gl: us
+
+  - name: lagos
+    q: '("backend engineer" OR "backend developer") ("node.js" OR typescript) Lagos (site:jobs.lever.co OR site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.ashbyhq.com OR site:apply.workable.com OR site:linkedin.com/jobs)'
+    gl: ng

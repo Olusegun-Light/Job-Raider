@@ -1,0 +1,6 @@
+# ATS board slugs polled directly (no Serper credits used).
+# greenhouse: boards.greenhouse.io/{slug}   lever: jobs.lever.co/{slug}   ashby: jobs.ashbyhq.com/{slug}
+# Seeded in milestone 2 with slugs verified against live boards.
+greenhouse: []
+lever: []
+ashby: []
