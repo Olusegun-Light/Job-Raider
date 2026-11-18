@@ -132,6 +132,21 @@ describe('scoreJob', () => {
     expect(scoreJob(job, rules, now)).toBe(17);
   });
 
+  test('takes the open-remote terms from rules.yaml rather than a hardcoded list', () => {
+    const custom = {
+      ...rules,
+      locationTargets: { ...rules.locationTargets, remote: ['remote', 'latam'] },
+    };
+    const job = makeJob({ ...bare, location: 'Remote (LATAM)', remote: true });
+
+    expect(scoreJob(job, custom, now)).toBe(3);
+  });
+
+  test('does not score a bare "remote" as open beyond the UK', () => {
+    // "Remote" alone says nothing about which countries are eligible.
+    expect(scoreJob(makeJob({ ...bare, location: 'Remote', remote: true }), rules, now)).toBe(0);
+  });
+
   test('uses the snippet in place of the description for serper jobs', () => {
     const job = makeJob({
       ...bare,

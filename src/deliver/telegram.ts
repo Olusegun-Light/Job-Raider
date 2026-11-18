@@ -31,21 +31,40 @@ export function formatRelativeAge(postedAt: string | null, now: Date): string | 
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+/**
+ * Caps on the variable-length fields, so one absurd title cannot produce a
+ * block that exceeds Telegram's limit. The splitter would then have to cut
+ * mid-tag, Telegram would answer 400 "Unclosed start tag", and the entire
+ * digest would be lost rather than one job being ugly.
+ */
+const MAX_TITLE = 300;
+const MAX_COMPANY = 120;
+const MAX_LOCATION = 160;
+
+/** Trim to a character budget on a word boundary where possible. */
+function clamp(text: string, limit: number): string {
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit - 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${lastSpace > limit * 0.6 ? cut.slice(0, lastSpace) : cut}\u2026`;
+}
+
 /** The three-line block from plan §8. */
 export function formatJobBlock(job: ScoredJob, now: Date): string {
   const badge = job.ukSponsorLicensed ? ' 🏛️' : '';
   const age = formatRelativeAge(job.postedAt, now);
   const meta = [
-    `📍 ${escapeHtml(job.location ?? 'location not stated')}`,
+    `📍 ${escapeHtml(clamp(job.location ?? 'location not stated', MAX_LOCATION))}`,
     `🛂 Sponsorship: ${job.sponsorship}${badge}`,
     `⭐ ${job.score}`,
   ];
-  const footer = [`<a href="${encodeURI(job.url)}">Apply</a>`, job.source, age].filter(
+  // encodeURI leaves & and # alone, so the href still needs HTML escaping.
+  const footer = [`<a href="${escapeHtml(encodeURI(job.url))}">Apply</a>`, job.source, age].filter(
     (part): part is string => Boolean(part),
   );
 
   return [
-    `${SPONSOR_ICON[job.sponsorship]} <b>${escapeHtml(job.title)}</b> — ${escapeHtml(job.company)}`,
+    `${SPONSOR_ICON[job.sponsorship]} <b>${escapeHtml(clamp(job.title, MAX_TITLE))}</b> — ${escapeHtml(clamp(job.company, MAX_COMPANY))}`,
     meta.join(' · '),
     footer.join(' · '),
   ].join('\n');
@@ -89,9 +108,14 @@ export function renderTelegramMessages(jobs: ScoredJob[], stats: RunStats, now: 
       continue;
     }
     if (current.length > 0) messages.push(current);
-    // A single block over the limit would be unsendable; truncate rather than
-    // drop the job, keeping tags balanced by cutting only plain text.
-    current = block.length <= TELEGRAM_LIMIT ? block : `${block.slice(0, TELEGRAM_LIMIT - 1)}…`;
+    // Field caps keep every block well under the limit, so this is only a
+    // backstop. Drop the block rather than emit a mid-tag cut, which would
+    // make Telegram reject the message and lose the whole digest.
+    if (block.length <= TELEGRAM_LIMIT) {
+      current = block;
+    } else {
+      current = '';
+    }
   }
   if (current.length > 0) messages.push(current);
 

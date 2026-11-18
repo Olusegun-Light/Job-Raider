@@ -12,35 +12,50 @@ const POSITIVE: RegExp[] = [
   /\b(visa|work|immigration)\s+sponsorship\b/,
   /\bsponsorship\s+(is\s+)?(available|offered|provided|possible)\b/,
   /\b(we|they)\s+(can|do|will|would)\s+sponsor\b/,
-  /\b(happy|able|willing|open)\s+to\s+sponsor\b/,
+  /\b(happy|able|willing|open|glad)\s+to\s+sponsor\b/,
   /\b(can|do|will)\s+(offer|provide)\s+(visa\s+)?sponsorship\b/,
   /\bsponsor\s+(your|a|the)\s+(visa|work\s+permit)\b/,
+  /\bwhich\s+we\s+will\s+sponsor\b/,
   /\bskilled\s+worker\s+visa\b/,
   /\btier\s*2\s+visa\b/,
   /\brelocation\s+(support|package|assistance|allowance)\b/,
   /\bvisa\s+support\b/,
   /\bwe\s+sponsor\b/,
+  // "we don't just sponsor visas, we also relocate you" is an offer, not a refusal.
+  /\b(not|don't|do\s+not|doesn't|does\s+not)\s+just\s+sponsor\b/,
 ];
 
 /**
- * Patterns that mean the employer will not sponsor. Checked first and allowed
- * to win, because a posting that mentions both ("Visa sponsorship: we are
- * unable to sponsor") is saying no.
+ * An explicit refusal to sponsor. These outrank everything: an employer that
+ * says "we cannot sponsor" is not sponsoring, whatever else the ad mentions.
+ *
+ * "not just sponsor" ("we don't just sponsor visas, we also relocate you") and
+ * "with or without sponsorship" are excluded, because both are sponsoring
+ * employers phrasing a positive with a negative word in it.
  */
-const NEGATIVE: RegExp[] = [
-  // A negation followed, within one clause, by "sponsor"/"sponsorship":
-  // catches "cannot offer visa sponsorship", "are unable to sponsor", etc.
-  /\b(cannot|can\s?not|can't|could\s+not|couldn't|won't|will\s+not|unable|not\s+able|not\s+in\s+a\s+position|do\s+not|don't|does\s+not|doesn't|no\s+longer)\b[^.!?]{0,40}?\bsponsor(ship|ing)?\b/,
+const HARD_NEGATIVE: RegExp[] = [
+  /\b(cannot|can\s?not|can't|could\s+not|couldn't|won't|will\s+not|unable|not\s+able|not\s+in\s+a\s+position|do\s+not|don't|does\s+not|doesn't|no\s+longer)\b(?![^.!?]*\bjust\s+sponsor\b)[^.!?]{0,40}?\bsponsor(ship|ing)?\b/,
   /\bsponsorship\s+is\s+(not|un)\s*available\b/,
   /\bno\s+(visa\s+|work\s+)?sponsorship\b/,
-  /\bwithout\s+(visa\s+)?sponsorship\b/,
+  /(?<!with\s+or\s)\bwithout\s+(visa\s+)?sponsorship\s+(is|are|will)\b/,
   /\bnot\s+eligible\s+for\s+(visa\s+)?sponsorship\b/,
   /\bnot\s+offering\s+(visa\s+)?sponsorship\b/,
+  /\b(unable|not\s+able)\s+to\s+support\s+visa\b/,
+];
+
+/**
+ * Statements about the candidate's eligibility, not about sponsorship.
+ *
+ * Nearly every UK ad carries one of these, including ads that sponsor. So a
+ * phrase here only means "no" when the ad says nothing positive about
+ * sponsorship anywhere; otherwise it is boilerplate sitting next to an offer.
+ */
+const ELIGIBILITY_ONLY: RegExp[] = [
   /\bmust\s+(already\s+)?have\s+the\s+right\s+to\s+work\b/,
   /\b(existing|current)\s+right\s+to\s+work\b/,
   /\balready\s+have\s+the\s+right\s+to\s+work\b/,
   /\bmust\s+(already\s+)?be\s+(eligible|authorised|authorized)\s+to\s+work\b/,
-  /\b(unable|not\s+able)\s+to\s+support\s+visa\b/,
+  /\brequire\s+the\s+right\s+to\s+work\b/,
 ];
 
 const matchesAny = (haystack: string, patterns: RegExp[]): boolean =>
@@ -60,8 +75,9 @@ export function detectSponsorship(...texts: (string | null | undefined)[]): Spon
     .replace(/\s+/g, ' ');
   if (!haystack) return 'unknown';
 
-  if (matchesAny(haystack, NEGATIVE)) return 'no';
+  if (matchesAny(haystack, HARD_NEGATIVE)) return 'no';
   if (matchesAny(haystack, POSITIVE)) return 'yes';
+  if (matchesAny(haystack, ELIGIBILITY_ONLY)) return 'no';
   return 'unknown';
 }
 

@@ -1,8 +1,15 @@
 import { describe, expect, test } from 'vitest';
-import { mkdtempSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { dropSeen, loadSeen, pruneSeen, saveSeen, type SeenStore } from '../src/dedupe.js';
+import { dirname, join } from 'node:path';
+import {
+  dropSeen,
+  loadSeen,
+  pruneSeen,
+  recordSeen,
+  saveSeen,
+  type SeenStore,
+} from '../src/dedupe.js';
 import { makeScoredJob } from './helpers.js';
 
 const now = new Date('2026-11-18T12:00:00.000Z');
@@ -29,6 +36,24 @@ describe('loadSeen', () => {
 
   test('returns an empty store rather than crashing on corrupt json', () => {
     expect(loadSeen(tempFile('{not json'))).toEqual({});
+  });
+
+  test('reports a corrupt store instead of failing silently', () => {
+    const warnings: string[] = [];
+    loadSeen(tempFile('{not json'), (msg) => warnings.push(msg));
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/seen/i);
+  });
+
+  test('preserves a corrupt store beside the new one, so history is recoverable', () => {
+    const path = tempFile('{not json');
+
+    loadSeen(path, () => {});
+
+    const salvaged = readdirSync(dirname(path)).filter((f) => f.includes('corrupt'));
+    expect(salvaged).toHaveLength(1);
+    expect(readFileSync(join(dirname(path), salvaged[0]!), 'utf8')).toBe('{not json');
   });
 
   test('returns an empty store when the json is the wrong shape', () => {
@@ -120,6 +145,44 @@ describe('dropSeen', () => {
     expect(dropSeen(jobs, {})).toHaveLength(2);
   });
 
+  test('keeps two distinct requisitions that share a company and a title', () => {
+    // Real boards carry same-title reqs routinely: a second headcount, another
+    // team, another location. Collapsing them loses a real job permanently, so
+    // only a shared posting identifier may collapse two records.
+    const london = makeScoredJob({
+      id: 'a',
+      company: 'Wise',
+      title: 'Backend Engineer',
+      location: 'London, UK',
+      url: 'https://job-boards.greenhouse.io/wise/jobs/111',
+    });
+    const manchester = makeScoredJob({
+      id: 'b',
+      company: 'Wise',
+      title: 'Backend Engineer',
+      location: 'Manchester, UK',
+      url: 'https://job-boards.greenhouse.io/wise/jobs/222',
+    });
+
+    expect(dropSeen([london, manchester], {})).toHaveLength(2);
+  });
+
+  test('delivers a new requisition whose title is already in the seen store', () => {
+    // The store suppresses by job id only. Matching on company + title would
+    // mean a repost or a second headcount is never reported again.
+    const store: SeenStore = {
+      'old-id': { firstSeen: daysAgo(30), title: 'Backend Engineer', company: 'Wise' },
+    };
+    const newReq = makeScoredJob({
+      id: 'new-id',
+      company: 'Wise',
+      title: 'Backend Engineer',
+      url: 'https://job-boards.greenhouse.io/wise/jobs/999',
+    });
+
+    expect(dropSeen([newReq], store)).toHaveLength(1);
+  });
+
   test('collapses the same job arriving from two sources, preferring the ATS version', () => {
     const viaSerper = makeScoredJob({
       id: 'serper-id',
@@ -146,7 +209,35 @@ describe('dropSeen', () => {
     expect(kept[0]!.description).not.toBeNull();
   });
 
-  test('collapses a near-duplicate title from the same company even on different urls', () => {
+  test('collapses a serper hit onto the ATS record when the job id matches', () => {
+    // The serper link carries the Greenhouse job id as gh_jid, which is what
+    // proves these two records are one posting.
+    const viaSerper = makeScoredJob({
+      id: 'a',
+      source: 'serper',
+      company: 'Monzo',
+      title: 'Senior Backend Engineer',
+      url: 'https://monzo.com/careers?gh_jid=7343996',
+      description: null,
+      snippet: 'Node.js',
+    });
+    const viaAts = makeScoredJob({
+      id: 'b',
+      source: 'greenhouse',
+      company: 'monzo',
+      title: 'senior backend engineer',
+      url: 'https://job-boards.greenhouse.io/monzo/jobs/7343996',
+    });
+
+    const kept = dropSeen([viaSerper, viaAts], {});
+
+    expect(kept).toHaveLength(1);
+    expect(kept[0]!.source).toBe('greenhouse');
+  });
+
+  test('keeps both when two sources share a title but nothing identifies them as one job', () => {
+    // Without a shared identifier these may be two different reqs. A duplicate
+    // in the digest is a nuisance; dropping a real job is a silent loss.
     const a = makeScoredJob({
       id: 'a',
       source: 'serper',
@@ -162,13 +253,25 @@ describe('dropSeen', () => {
       url: 'https://y/b',
     });
 
-    const kept = dropSeen([a, b], {});
-
-    expect(kept).toHaveLength(1);
-    expect(kept[0]!.source).toBe('lever');
+    expect(dropSeen([a, b], {})).toHaveLength(2);
   });
 
-  test('does not collapse two genuinely different roles at the same company', () => {
+  test('collapses two records that reached the same url twice in one run', () => {
+    const a = makeScoredJob({
+      id: 'dup',
+      source: 'greenhouse',
+      url: 'https://job-boards.greenhouse.io/monzo/jobs/5',
+    });
+    const b = makeScoredJob({
+      id: 'dup',
+      source: 'greenhouse',
+      url: 'https://boards.greenhouse.io/monzo/jobs/5?gh_src=x',
+    });
+
+    expect(dropSeen([a, b], {})).toHaveLength(1);
+  });
+
+  test('does not collapse two genuinely different titles at the same company', () => {
     const a = makeScoredJob({
       id: 'a',
       company: 'Monzo',
@@ -190,29 +293,37 @@ describe('dropSeen', () => {
       id: 'a',
       company: 'Monzo',
       title: 'Backend Engineer',
-      url: 'https://x/a',
+      url: 'https://job-boards.greenhouse.io/monzo/jobs/7',
     });
     const b = makeScoredJob({
       id: 'b',
       company: 'Wise',
       title: 'Backend Engineer',
-      url: 'https://x/b',
+      url: 'https://job-boards.greenhouse.io/wise/jobs/7',
     });
 
     expect(dropSeen([a, b], {})).toHaveLength(2);
   });
 
-  test('drops a fuzzy duplicate of a job already seen on a previous run', () => {
-    const store: SeenStore = {
-      'old-id': { firstSeen: daysAgo(1), title: 'Backend Engineer', company: 'Monzo' },
-    };
-    const sameJobNewUrl = makeScoredJob({
-      id: 'fresh-id',
-      company: 'monzo',
+  test('records the collapsed duplicate\u2019s id too, so it stays suppressed later', () => {
+    const viaSerper = makeScoredJob({
+      id: 'serper-id',
+      source: 'serper',
+      company: 'Monzo',
       title: 'Backend Engineer',
-      url: 'https://x/other',
+      url: 'https://monzo.com/careers?gh_jid=7343996',
+    });
+    const viaAts = makeScoredJob({
+      id: 'ats-id',
+      source: 'greenhouse',
+      company: 'Monzo',
+      title: 'Backend Engineer',
+      url: 'https://job-boards.greenhouse.io/monzo/jobs/7343996',
     });
 
-    expect(dropSeen([sameJobNewUrl], store)).toEqual([]);
+    const kept = dropSeen([viaSerper, viaAts], {});
+    const store = recordSeen({}, kept, new Date(daysAgo(0)));
+
+    expect(Object.keys(store).sort()).toEqual(['ats-id', 'serper-id']);
   });
 });

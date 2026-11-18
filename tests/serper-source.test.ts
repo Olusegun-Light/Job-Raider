@@ -10,6 +10,10 @@ let server: Server | undefined;
 
 type Req = { body: unknown; headers: Record<string, unknown> };
 
+function isStatusReply(r: unknown): r is { status: number; body: unknown } {
+  return typeof r === 'object' && r !== null && 'status' in r && 'body' in r;
+}
+
 async function serve(
   reply: (req: Req, n: number) => unknown,
 ): Promise<{ url: string; seen: Req[] }> {
@@ -23,8 +27,11 @@ async function serve(
         headers: req.headers,
       };
       seen.push(entry);
-      res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify(reply(entry, seen.length)));
+      const out = reply(entry, seen.length);
+      const status = isStatusReply(out) ? out.status : 200;
+      const body = isStatusReply(out) ? out.body : out;
+      res.writeHead(status, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(body));
     });
   });
   await new Promise<void>((resolve) => server!.listen(0, '127.0.0.1', resolve));
@@ -92,7 +99,7 @@ describe('serperSource', () => {
     await serperSource({ endpoint: url }).fetch(context([query('a')], 'secret-key'));
 
     expect(seen[0]!.headers['x-api-key']).toBe('secret-key');
-    expect(seen[0]!.body).toMatchObject({ q: 'a backend', gl: 'uk', num: 2, tbs: 'qdr:d' });
+    expect(seen[0]!.body).toMatchObject({ q: 'a backend', gl: 'uk', num: 2, tbs: 'qdr:d2' });
   });
 
   test('uses the week time window when asked for a catch-up run', async () => {
@@ -137,6 +144,28 @@ describe('serperSource', () => {
     const pages = seen.map((s) => (s.body as { page?: number }).page);
     expect(pages.filter((p) => p === 2)).toHaveLength(1);
     expect(seen).toHaveLength(3);
+  });
+
+  test('keeps page 1 when page 2 fails, instead of discarding a paid-for page', async () => {
+    const { url } = await serve((req, n) => {
+      const body = req.body as { page?: number };
+      if (body.page === 2) return { status: 500, body: { error: 'boom' } };
+      void n;
+      return {
+        status: 200,
+        body: {
+          organic: [result('https://jobs.lever.co/a/1'), result('https://jobs.lever.co/a/2')],
+          credits: 1,
+        },
+      };
+    });
+
+    const { jobs, errors } = await serperSource({ endpoint: url }).fetch(
+      context([query('full', 2)], 'k'),
+    );
+
+    expect(jobs).toHaveLength(2);
+    expect(errors).toHaveLength(1);
   });
 
   test('one failing query does not lose the results of the others', async () => {

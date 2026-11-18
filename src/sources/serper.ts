@@ -35,9 +35,17 @@ const serperResponseSchema = z
 
 export type SerperResponse = z.infer<typeof serperResponseSchema>;
 
-/** Google's time-range operator: past day for a daily run, past week for catch-up. */
+/**
+ * Google's time-range operator.
+ *
+ * A daily run asks for two days, not one: GitHub's scheduler fires minutes to
+ * an hour late, so an exactly-24h window leaves a gap between consecutive
+ * runs that nothing else covers (Serper results carry no posting date, so
+ * there is no age fallback). Dedupe absorbs the overlap; a gap cannot be
+ * recovered.
+ */
 export function tbsForWindow(window: TimeWindow): string {
-  return window === 'week' ? 'qdr:w' : 'qdr:d';
+  return window === 'week' ? 'qdr:w' : 'qdr:d2';
 }
 
 /** `{slug}` position in the path for each ATS host we recognise. */
@@ -181,17 +189,18 @@ export function serperSource(options: SerperOptions = {}): Source {
         ctx.config.queries.map((query) =>
           limit(async () => {
             try {
+              // Keep page 1 before attempting page 2: a 429 on the second
+              // request must not throw away results already paid for.
               const first = await runQuery(query, 1);
-              const found = [...first];
+              jobs.push(...first);
+              ctx.log.debug('serper query done', { query: query.name, results: first.length });
 
               // Only pay for page 2 when page 1 came back full.
               if (first.length >= query.num) {
                 const second = await runQuery(query, 2);
-                found.push(...second);
+                jobs.push(...second);
+                ctx.log.debug('serper page 2 done', { query: query.name, results: second.length });
               }
-
-              ctx.log.debug('serper query done', { query: query.name, results: found.length });
-              jobs.push(...found);
             } catch (error) {
               const message = `serper/${query.name}: ${
                 error instanceof Error ? error.message : String(error)

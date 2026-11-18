@@ -47,7 +47,7 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
   const seenPath = deps.seenPath ?? join(process.cwd(), 'data', 'seen.json');
   const discoveredPath = deps.discoveredPath ?? join(process.cwd(), 'data', 'discovered.json');
   const retentionDays = deps.retentionDays ?? 60;
-  const seen = loadSeen(seenPath);
+  const seen = loadSeen(seenPath, (message) => log.warn(message));
   const started = Date.now();
 
   const enabled = sources.filter((s) => options.sources.includes(s.name));

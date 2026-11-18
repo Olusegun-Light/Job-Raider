@@ -199,6 +199,25 @@ describe('renderTelegramMessages', () => {
     expect(messages.join('\n')).toMatch(/7/);
   });
 
+  test('escapes the ampersand inside the apply href', () => {
+    const job = makeScoredJob({ url: 'https://jobs.example.com/apply?a=1&b=2' });
+    expect(formatJobBlock(job, now)).toContain('?a=1&amp;b=2');
+  });
+
+  test('keeps HTML balanced when one job block would exceed the limit on its own', () => {
+    // An absurd title must not produce a message with an unclosed tag:
+    // Telegram answers 400 and the whole digest is lost.
+    const job = makeScoredJob({ title: 'Backend Engineer '.repeat(400), company: 'A'.repeat(500) });
+
+    for (const message of renderTelegramMessages([job], makeStats({ delivered: 1 }), now)) {
+      expect(message.length).toBeLessThanOrEqual(TELEGRAM_LIMIT);
+      expect((message.match(/<b>/g) ?? []).length).toBe((message.match(/<\/b>/g) ?? []).length);
+      expect((message.match(/<a href=/g) ?? []).length).toBe(
+        (message.match(/<\/a>/g) ?? []).length,
+      );
+    }
+  });
+
   test('splits a single section that is itself too long for one message', () => {
     const jobs = Array.from({ length: 30 }, (_, i) =>
       makeScoredJob({

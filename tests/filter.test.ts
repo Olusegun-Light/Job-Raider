@@ -29,6 +29,43 @@ describe('bucketFor', () => {
     expect(bucketFor(makeJob({ location: null, remote: true }), targets)).toBe('remote');
   });
 
+  test('buckets a serper job from its snippet, since google gives no location field', () => {
+    // Otherwise every hit from the uk-sponsor query lands in "Other" and the
+    // UK no-sponsor drop never applies to it.
+    const serperJob = makeJob({
+      source: 'serper',
+      location: null,
+      remote: null,
+      description: null,
+      snippet: 'London, UK. Node.js/TypeScript. We offer Skilled Worker visa sponsorship.',
+    });
+    expect(bucketFor(serperJob, targets)).toBe('uk');
+  });
+
+  test('buckets a serper job from its title when the snippet says nothing', () => {
+    const serperJob = makeJob({
+      source: 'serper',
+      title: 'Backend Engineer, Lagos',
+      location: null,
+      remote: null,
+      description: null,
+      snippet: 'A great place to work',
+    });
+    expect(bucketFor(serperJob, targets)).toBe('lagos');
+  });
+
+  test('does not read an ATS job\u2019s description for its location', () => {
+    // An ATS board states the location; the description mentioning London
+    // (an office, a client) must not override "Tokyo".
+    const atsJob = makeJob({
+      source: 'greenhouse',
+      location: 'Tokyo, Japan',
+      remote: false,
+      description: 'Our London and Lagos offices collaborate closely.',
+    });
+    expect(bucketFor(atsJob, targets)).toBe('other');
+  });
+
   test('returns other for a location that matches no bucket', () => {
     expect(bucketFor(makeJob({ location: 'San Francisco, CA', remote: false }), targets)).toBe(
       'other',

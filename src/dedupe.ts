@@ -1,16 +1,27 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { z } from 'zod';
 import type { ScoredJob } from './types.js';
 
-/** Query params that identify the referrer, not the job. */
+/**
+ * Query params that identify the referrer, not the job.
+ *
+ * Listed exactly, never by prefix: `gh_src` is tracking, but `gh_jid` is
+ * Greenhouse's job id on an embedded careers page, and stripping that would
+ * collapse every job on the page to a single id.
+ */
 const TRACKING_PARAMS =
-  /^(utm_|gh_|ref$|source$|src$|lever-|mc_|_hs|fbclid$|gclid$|trk$|trackingId$)/i;
+  /^(utm_[a-z_]*|gh_src|ref|source|src|mc_[a-z_]*|_hs[a-z_]*|fbclid|gclid|trk|trackingid|lever-origin|lever-source)$/i;
 
-/** Greenhouse served boards from two hosts during its migration; same job. */
+/**
+ * Hosts that serve the same board. Greenhouse ran two hosts through its
+ * migration and a third in the EU; all reach the same posting.
+ */
 const HOST_ALIASES: Record<string, string> = {
   'boards.greenhouse.io': 'job-boards.greenhouse.io',
+  'boards.eu.greenhouse.io': 'job-boards.greenhouse.io',
+  'job-boards.eu.greenhouse.io': 'job-boards.greenhouse.io',
 };
 
 /**
@@ -26,8 +37,10 @@ export function normalizeUrl(raw: string): string {
   }
 
   url.hash = '';
-  url.hostname = HOST_ALIASES[url.hostname.toLowerCase()] ?? url.hostname.toLowerCase();
-  url.protocol = url.protocol.toLowerCase();
+  // One job must not get two ids over a scheme or a "www." prefix.
+  if (url.protocol === 'http:') url.protocol = 'https:';
+  const host = url.hostname.toLowerCase().replace(/^www\./, '');
+  url.hostname = HOST_ALIASES[host] ?? host;
 
   for (const key of [...url.searchParams.keys()]) {
     if (TRACKING_PARAMS.test(key)) url.searchParams.delete(key);
@@ -66,16 +79,34 @@ const seenEntrySchema = z.object({
  * dedupe history re-sends some jobs once, while crashing means no digest at
  * all. Individual malformed entries are dropped and the rest kept.
  */
-export function loadSeen(path: string): SeenStore {
+export function loadSeen(path: string, onWarn: (message: string) => void = () => {}): SeenStore {
   if (!existsSync(path)) return {};
+
+  /**
+   * A corrupt store is reported and set aside, never silently overwritten:
+   * the run would otherwise re-deliver everything and then destroy the only
+   * copy of 60 days of history, with no clue as to why.
+   */
+  const salvage = (reason: string): SeenStore => {
+    const backup = `${path}.corrupt-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+    try {
+      renameSync(path, backup);
+      onWarn(`seen store at ${path} ${reason}; moved it to ${backup} and starting fresh`);
+    } catch {
+      onWarn(`seen store at ${path} ${reason} and could not be set aside; starting fresh`);
+    }
+    return {};
+  };
 
   let raw: unknown;
   try {
     raw = JSON.parse(readFileSync(path, 'utf8'));
   } catch {
-    return {};
+    return salvage('is not valid JSON');
   }
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return {};
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    return salvage('is not a JSON object');
+  }
 
   const store: SeenStore = {};
   for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
@@ -107,16 +138,12 @@ export function pruneSeen(store: SeenStore, now: Date, retentionDays: number): S
   return kept;
 }
 
-/** Key for the second, fuzzy dedupe pass: same company, same role. */
-function fuzzyKey(company: string, title: string): string {
-  const flatten = (s: string): string =>
-    s
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim()
-      .replace(/\s+/g, ' ');
-  return `${flatten(company)}::${flatten(title)}`;
-}
+/** Loose comparison form: case and punctuation insensitive. */
+const flatten = (text: string): string =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 
 /** ATS records carry location, dates and a full description; Serper has a snippet. */
 const SOURCE_RANK: Record<ScoredJob['source'], number> = {
@@ -127,52 +154,106 @@ const SOURCE_RANK: Record<ScoredJob['source'], number> = {
 };
 
 /**
- * Remove jobs already reported, and collapse jobs found twice in one run.
+ * The identifiers in a job URL that could name the posting: the path segments
+ * that look like ids, plus any query value (Greenhouse's embedded boards pass
+ * the job id as `gh_jid`).
+ */
+const IDENTIFIER = /^[0-9]+$|^[0-9a-f]{8}-[0-9a-f-]{8,}$/i;
+
+function urlIdentifiers(rawUrl: string): string[] {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return [];
+  }
+
+  const fromPath = url.pathname.split('/').filter((segment) => IDENTIFIER.test(segment));
+  const fromQuery = [...url.searchParams.values()].filter((value) => IDENTIFIER.test(value));
+  return [...fromPath, ...fromQuery].map((id) => id.toLowerCase());
+}
+
+/**
+ * Whether two records are provably the same posting reached two ways.
  *
- * Two passes: the id (hash of the normalized URL) catches the same posting at
- * the same URL, and `company + title` catches the same posting found via both
- * Serper and its ATS board, where the URLs differ. The ATS copy wins, since
- * it has the real location, posting date and description.
+ * Requires the same company and title AND a shared posting identifier. Title
+ * alone is not enough: boards routinely carry several reqs called "Backend
+ * Engineer" (a second headcount, another team, another location), and
+ * collapsing those loses a real job. A duplicate in the digest is a nuisance;
+ * a job that is never reported is invisible.
+ */
+function isSamePosting(a: ScoredJob, b: ScoredJob): boolean {
+  if (flatten(a.company) !== flatten(b.company)) return false;
+  if (flatten(a.title) !== flatten(b.title)) return false;
+
+  const aIds = urlIdentifiers(a.url);
+  const bIds = urlIdentifiers(b.url);
+  if (aIds.length === 0 || bIds.length === 0) return false;
+  return aIds.some((id) => bIds.includes(id));
+}
+
+/**
+ * Remove jobs already reported, and collapse records of one posting found
+ * twice in a single run.
+ *
+ * Suppression against previous runs is by job id only. Matching the store on
+ * company + title would mean a repost or a second headcount at a target
+ * company is never reported again for the whole retention window.
  */
 export function dropSeen<T extends ScoredJob>(jobs: T[], seen: SeenStore): T[] {
-  const seenFuzzy = new Set(
-    Object.values(seen).map((entry) => fuzzyKey(entry.company, entry.title)),
-  );
+  const kept: T[] = [];
 
-  const byFuzzy = new Map<string, T>();
   for (const job of jobs) {
     if (seen[job.id]) continue;
 
-    const key = fuzzyKey(job.company, job.title);
-    if (seenFuzzy.has(key)) continue;
-
-    const existing = byFuzzy.get(key);
-    if (!existing) {
-      byFuzzy.set(key, job);
+    // Same normalized URL reached twice in one run.
+    const byId = kept.findIndex((other) => other.id === job.id);
+    if (byId !== -1) {
+      kept[byId] = mergeDuplicate(kept[byId]!, job);
       continue;
     }
 
-    // Keep the richer record; break a tie on score.
-    const better =
-      SOURCE_RANK[job.source] > SOURCE_RANK[existing.source] ||
-      (SOURCE_RANK[job.source] === SOURCE_RANK[existing.source] && job.score > existing.score);
-    if (better) byFuzzy.set(key, job);
+    const twin = kept.findIndex((other) => isSamePosting(other, job));
+    if (twin !== -1) {
+      kept[twin] = mergeDuplicate(kept[twin]!, job);
+      continue;
+    }
+
+    kept.push(job);
   }
 
-  // Preserve the incoming order of whichever record was kept.
-  const kept = new Set(byFuzzy.values());
-  return jobs.filter((job) => kept.has(job));
+  return kept;
+}
+
+/**
+ * Keep the richer of two records of one posting, remembering the other's id
+ * so later runs suppress the posting however it is found next time.
+ */
+function mergeDuplicate<T extends ScoredJob>(existing: T, incoming: T): T {
+  const preferIncoming =
+    SOURCE_RANK[incoming.source] > SOURCE_RANK[existing.source] ||
+    (SOURCE_RANK[incoming.source] === SOURCE_RANK[existing.source] &&
+      incoming.score > existing.score);
+
+  const winner = preferIncoming ? incoming : existing;
+  const loser = preferIncoming ? existing : incoming;
+
+  const duplicateIds = [
+    ...new Set([...(winner.duplicateIds ?? []), ...(loser.duplicateIds ?? []), loser.id]),
+  ].filter((id) => id !== winner.id);
+
+  return { ...winner, duplicateIds };
 }
 
 /** Record the delivered jobs so later runs do not report them again. */
 export function recordSeen(store: SeenStore, jobs: ScoredJob[], now: Date): SeenStore {
   const updated: SeenStore = { ...store };
   for (const job of jobs) {
-    updated[job.id] ??= {
-      firstSeen: now.toISOString(),
-      title: job.title,
-      company: job.company,
-    };
+    const entry = { firstSeen: now.toISOString(), title: job.title, company: job.company };
+    updated[job.id] ??= entry;
+    // Record the ids of records collapsed into this one, so the posting stays
+    // suppressed whichever source finds it next time.
+    for (const id of job.duplicateIds ?? []) updated[id] ??= entry;
   }
   return updated;
 }

@@ -58,18 +58,22 @@ jobs:
             --window=${{ inputs.window || 'day' }} \
             ${{ inputs.keep_no_sponsor && '--keep-no-sponsor' || '' }}
 
-      - name: Commit the dedupe store if it changed
-        # Runs even when the radar step failed: jobs already delivered before
-        # the failure must still be recorded, or they are sent again tomorrow.
+      - name: Commit the run state if it changed
+        # Runs even when the radar step failed, because the register refresh or
+        # a later step can fail after a digest was delivered and recorded. A
+        # failure *during* delivery writes nothing, so there is simply nothing
+        # to commit and this exits early.
         if: always()
         run: |
-          if [[ -z "$(git status --porcelain data/seen.json)" ]]; then
-            echo "seen.json unchanged"
+          # discovered.json feeds `npm run discover`; without committing it,
+          # every suggestion dies with the ephemeral runner.
+          if [[ -z "$(git status --porcelain data/seen.json data/discovered.json)" ]]; then
+            echo "no run state changed"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/seen.json
+          git add data/seen.json data/discovered.json
           git commit -m "chore: update seen [skip ci]"
           # The scheduled run and a manual run can both push; rebase instead
           # of failing the whole job on a non-fast-forward.

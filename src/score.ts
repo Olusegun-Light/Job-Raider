@@ -6,16 +6,16 @@ import { containsAnyTerm, matchingTerms } from './util/text.js';
 const BACKEND_TERMS = ['backend', 'back-end', 'back end'];
 const STACK_TERMS = ['node', 'node.js', 'nodejs', 'typescript', 'ts'];
 
-/** Remote reach that actually helps someone applying from Lagos. */
-const OPEN_REMOTE_TERMS = [
-  'emea',
-  'europe',
-  'anywhere',
-  'worldwide',
-  'africa',
-  'nigeria',
-  'global',
-];
+/**
+ * Remote reach that actually helps someone applying from Lagos, taken from
+ * rules.yaml so editing the config changes scoring as well as filtering.
+ *
+ * The bare word "remote" is excluded: on its own it says nothing about which
+ * countries are eligible, and "Remote - London" still needs UK right to work.
+ */
+function openRemoteTerms(rules: RulesConfig): string[] {
+  return rules.locationTargets.remote.filter((term) => term.trim().toLowerCase() !== 'remote');
+}
 
 const FRESH_HOURS = 24;
 
@@ -44,7 +44,7 @@ export function scoreJob(job: Job, rules: RulesConfig, now: Date): number {
   // role still needs the right to work in the UK.
   const locationText = [job.location ?? '', job.remote ? 'remote' : ''].join(' ');
   const ukOnly = containsAnyTerm(locationText, rules.locationTargets.uk);
-  const openRemote = containsAnyTerm(locationText, OPEN_REMOTE_TERMS);
+  const openRemote = containsAnyTerm(locationText, openRemoteTerms(rules));
   if (openRemote && !ukOnly) score += w.remoteOpen;
 
   const domainHits = matchingTerms(text, rules.domains).length;

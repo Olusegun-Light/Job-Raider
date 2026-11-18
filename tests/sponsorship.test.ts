@@ -43,6 +43,34 @@ describe('detectSponsorship', () => {
     expect(detectSponsorship(text)).toBe('no');
   });
 
+  // The shape that matters most: a sponsoring employer whose ad also carries
+  // the standard right-to-work line. Reading these as "no" silently discards
+  // the user's highest-priority category.
+  test.each([
+    'We are happy to offer visa sponsorship. You must have the right to work in the UK or be eligible for a Skilled Worker visa, which we will sponsor.',
+    'Visa sponsorship available. Please note: you must have the right to work in the country where the role is based.',
+    'We can sponsor Skilled Worker visas. Candidates with an existing right to work in the UK are also welcome.',
+    'We welcome applicants with or without sponsorship. We offer visa sponsorship and relocation support.',
+    "We don't just sponsor visas, we also cover relocation.",
+    'We offer visa sponsorship and relocation support. All applicants must have the right to work in the country of employment or be eligible for sponsorship.',
+  ])('reads "%s" as yes, despite the eligibility boilerplate', (text) => {
+    expect(detectSponsorship(text)).toBe('yes');
+  });
+
+  test('still says no when an explicit refusal sits beside eligibility boilerplate', () => {
+    expect(
+      detectSponsorship(
+        'You must have the right to work in the UK. We cannot offer visa sponsorship for this role.',
+      ),
+    ).toBe('no');
+  });
+
+  test('an explicit refusal outweighs a generic relocation perk elsewhere in the ad', () => {
+    expect(detectSponsorship('We offer relocation support. We are unable to sponsor visas.')).toBe(
+      'no',
+    );
+  });
+
   test('returns unknown when the text says nothing about visas', () => {
     expect(detectSponsorship('We use Node.js and TypeScript')).toBe('unknown');
   });

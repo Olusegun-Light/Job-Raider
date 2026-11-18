@@ -43,6 +43,34 @@ describe('normalizeUrl', () => {
     );
   });
 
+  test('keeps gh_jid, which identifies the job rather than the referrer', () => {
+    // gh_src is tracking; gh_jid is the Greenhouse job id on an embedded
+    // careers page. Stripping it collapses every job on that page to one id.
+    expect(normalizeUrl('https://acme.com/careers?gh_jid=4567890&gh_src=abc')).toBe(
+      'https://acme.com/careers?gh_jid=4567890',
+    );
+  });
+
+  test('gives two jobs on the same embedded careers page different ids', () => {
+    expect(jobId('https://acme.com/careers?gh_jid=4567890')).not.toBe(
+      jobId('https://acme.com/careers?gh_jid=1111111'),
+    );
+  });
+
+  test('upgrades http to https, so one job does not get two ids', () => {
+    expect(normalizeUrl('http://jobs.lever.co/acme/1')).toBe('https://jobs.lever.co/acme/1');
+  });
+
+  test('strips a www. prefix, so one job does not get two ids', () => {
+    expect(normalizeUrl('https://www.jobs.lever.co/acme/1')).toBe('https://jobs.lever.co/acme/1');
+  });
+
+  test('treats the EU greenhouse host as the same board', () => {
+    expect(jobId('https://boards.eu.greenhouse.io/wise/jobs/5')).toBe(
+      jobId('https://job-boards.greenhouse.io/wise/jobs/5'),
+    );
+  });
+
   test('returns the input unchanged when it is not a parseable url', () => {
     expect(normalizeUrl('not a url')).toBe('not a url');
   });

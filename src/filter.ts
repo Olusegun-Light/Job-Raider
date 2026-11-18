@@ -12,7 +12,13 @@ export type LocationTargets = RulesConfig['locationTargets'];
  * "nigeria" term that also sits in the remote bucket.
  */
 export function bucketFor(job: Job, targets: LocationTargets): LocationBucket {
-  const haystack = [job.location ?? '', job.remote ? 'remote' : ''].join(' ');
+  // A Google result has no location field, so the only place a location can
+  // be read from is the title and snippet. Without this, every hit from the
+  // uk-sponsor query lands in "Other" and the UK no-sponsor drop never fires.
+  // Only for Serper: an ATS board states the location, and a description
+  // mentioning London must not override "Tokyo".
+  const fallback = job.source === 'serper' ? `${job.title} ${job.snippet ?? ''}` : '';
+  const haystack = [job.location ?? '', job.remote ? 'remote' : '', fallback].join(' ');
 
   if (containsAnyTerm(haystack, targets.uk)) return 'uk';
   if (containsAnyTerm(haystack, targets.lagos)) return 'lagos';

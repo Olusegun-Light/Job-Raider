@@ -29,7 +29,11 @@ export type Job = {
 };
 
 /** A job that has been through filter + score and knows where it belongs. */
-export type ScoredJob = Job & { bucket: LocationBucket };
+export type ScoredJob = Job & {
+  bucket: LocationBucket;
+  /** Ids of other records of this same posting, collapsed during dedupe. */
+  duplicateIds?: string[];
+};
 
 export type SourceStats = {
   source: SourceName;

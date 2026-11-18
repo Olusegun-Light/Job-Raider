@@ -32,14 +32,16 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
 
 /** Keep secrets out of logs and error messages. */
 function redact(url: string): string {
+  // Telegram puts the bot token in the path, not the query string.
+  const withoutToken = url.replace(/\/bot[^/]+/i, '/bot<REDACTED>');
   try {
-    const u = new URL(url);
+    const u = new URL(withoutToken);
     for (const key of [...u.searchParams.keys()]) {
       if (/key|token|secret|password/i.test(key)) u.searchParams.set(key, 'REDACTED');
     }
     return u.toString();
   } catch {
-    return url;
+    return withoutToken;
   }
 }
 

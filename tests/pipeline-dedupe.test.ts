@@ -193,6 +193,34 @@ describe('runPipeline dedupe and seen.json', () => {
     expect(stats.perSource[0]!.passedFilter).toBe(2);
   });
 
+  test('does not record jobs when delivery throws, so they are retried tomorrow', async () => {
+    // The core data-integrity invariant: a failed digest must cost duplicates,
+    // never a job that is recorded as sent but never arrived.
+    const path = seenPath();
+    const failing: Deliverer = {
+      name: 'failing',
+      async deliver() {
+        throw new Error('telegram 400');
+      },
+      async deliverError() {},
+    };
+
+    await expect(
+      runPipeline({
+        sources: [source([job({ id: 'j1', url: 'https://x/1' })])],
+        config,
+        options: parseArgs([]),
+        env: { logLevel: 'error' },
+        log: createLogger({ level: 'error', sink: () => {} }),
+        deliverer: failing,
+        now,
+        seenPath: path,
+      }),
+    ).rejects.toThrow(/telegram 400/);
+
+    expect(loadSeen(path)).toEqual({});
+  });
+
   test('leaves seen.json valid json that a later run can read', async () => {
     const path = seenPath();
     await run({ sources: [source([job({ id: 'j1', url: 'https://x/1' })])], seenPath: path });

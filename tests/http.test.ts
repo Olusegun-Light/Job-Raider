@@ -56,6 +56,24 @@ afterEach(async () => {
 const schema = z.object({ ok: z.boolean() });
 const fast = { retries: 2, backoffMs: 1, timeoutMs: 500 };
 
+describe('fetchJson error text', () => {
+  test('redacts a telegram bot token, which lives in the url path', async () => {
+    const { base } = await serve(() => ({ status: 404, body: '{}' }));
+
+    await expect(
+      fetchJson(`${base}/bot123456:AAEsecret/sendMessage`, schema, fast),
+    ).rejects.toThrow(/REDACTED/);
+  });
+
+  test('does not leak the token itself into the error message', async () => {
+    const { base } = await serve(() => ({ status: 404, body: '{}' }));
+
+    await expect(
+      fetchJson(`${base}/bot123456:AAEsecret/sendMessage`, schema, fast),
+    ).rejects.not.toThrow(/AAEsecret/);
+  });
+});
+
 describe('fetchJson', () => {
   test('returns the parsed body when the response validates', async () => {
     const { base } = await serve(() => ({ body: '{"ok":true}' }));

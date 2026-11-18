@@ -28,8 +28,11 @@ const response = {
 };
 
 describe('tbsForWindow', () => {
-  test('restricts to the past day by default', () => {
-    expect(tbsForWindow('day')).toBe('qdr:d');
+  test('uses a two-day window for a daily run, to survive a late cron', () => {
+    // GitHub's scheduler runs minutes-to-an-hour late, so an exactly-24h
+    // window leaves a permanent gap between consecutive runs. Dedupe absorbs
+    // the overlap; a gap cannot be recovered.
+    expect(tbsForWindow('day')).toBe('qdr:d2');
   });
 
   test('restricts to the past week for a catch-up run', () => {
