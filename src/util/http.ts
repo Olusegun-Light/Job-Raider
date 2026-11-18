@@ -91,7 +91,21 @@ export async function fetchJson<T extends z.ZodTypeAny>(
     }
 
     if (!response.ok) {
-      lastError = new HttpError(`${safeUrl}: HTTP ${response.status}`, response.status, safeUrl);
+      // The body is where an API explains itself ("Unauthorized.", "quota
+      // exceeded"). Without it the caller sees a bare status and has to go
+      // hunting with curl.
+      let detail = '';
+      try {
+        const body = (await response.text()).trim().replace(/\s+/g, ' ');
+        if (body) detail = `: ${body.length > 300 ? `${body.slice(0, 300)}…` : body}`;
+      } catch {
+        // A body we cannot read is not worth failing over.
+      }
+      lastError = new HttpError(
+        `${safeUrl}: HTTP ${response.status}${detail}`,
+        response.status,
+        safeUrl,
+      );
       if (!RETRYABLE_STATUS(response.status)) throw lastError;
       continue;
     }

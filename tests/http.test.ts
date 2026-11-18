@@ -57,6 +57,25 @@ const schema = z.object({ ok: z.boolean() });
 const fast = { retries: 2, backoffMs: 1, timeoutMs: 500 };
 
 describe('fetchJson error text', () => {
+  test('includes the response body, which is where APIs explain a rejection', async () => {
+    // A bare "HTTP 403" sent me on a three-step hunt for a stray character in
+    // an API key; the body said "Unauthorized." all along.
+    const { base } = await serve(() => ({
+      status: 403,
+      body: '{"message":"Unauthorized.","statusCode":403}',
+    }));
+
+    await expect(fetchJson(`${base}/x`, schema, fast)).rejects.toThrow(/Unauthorized/);
+  });
+
+  test('truncates a long error body instead of dumping a whole html page', async () => {
+    const { base } = await serve(() => ({ status: 500, body: `{"e":"${'x'.repeat(5000)}"}` }));
+
+    await expect(fetchJson(`${base}/x`, schema, { ...fast, retries: 0 })).rejects.toThrow(
+      /\.{3}|…/,
+    );
+  });
+
   test('redacts a telegram bot token, which lives in the url path', async () => {
     const { base } = await serve(() => ({ status: 404, body: '{}' }));
 

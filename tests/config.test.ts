@@ -40,10 +40,22 @@ describe('loadConfig', () => {
   test('loads and validates the three yaml files', () => {
     const cfg = loadConfig({ configDir: configDir(VALID) });
 
-    expect(cfg.queries).toEqual([{ name: 'uk', q: 'backend node', gl: 'uk', num: 20 }]);
+    // num defaults to 10: Serper's free tier rejects num > 10 outright when a
+    // query uses site: operators ("Query pattern not allowed for free
+    // accounts"), and returns at most 10 results in any case.
+    expect(cfg.queries).toEqual([{ name: 'uk', q: 'backend node', gl: 'uk', num: 10 }]);
     expect(cfg.companies.greenhouse).toEqual(['monzo']);
     expect(cfg.rules.maxAgeHours).toBe(48);
     expect(cfg.rules.weights.sponsorshipYes).toBe(4);
+  });
+
+  test('honours an explicit num, so a paid account can ask for more', () => {
+    const files = {
+      ...VALID,
+      'queries.yaml': `queries:\n  - name: uk\n    q: backend\n    num: 20\n`,
+    };
+
+    expect(loadConfig({ configDir: configDir(files) }).queries[0]!.num).toBe(20);
   });
 
   test('rejects a query missing its q field with a readable error', () => {

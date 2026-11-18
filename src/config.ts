@@ -10,7 +10,12 @@ const queriesSchema = z.object({
         name: z.string().min(1),
         q: z.string().min(1),
         gl: z.string().min(2).default('us'),
-        num: z.number().int().min(1).max(100).default(20),
+        /**
+         * Serper's free tier returns a 400 ("Query pattern not allowed for
+         * free accounts") for num > 10 when the query uses site: operators,
+         * and caps results at 10 regardless. Paid accounts can raise it.
+         */
+        num: z.number().int().min(1).max(100).default(10),
       }),
     )
     .min(1),
