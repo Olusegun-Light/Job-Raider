@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { mkdtempSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { runPipeline } from '../src/pipeline.js';
 import { loadSeen, saveSeen, type SeenStore } from '../src/dedupe.js';
 import { createLogger } from '../src/util/log.js';
@@ -76,6 +76,9 @@ async function run(opts: { sources: Source[]; argv?: string[]; seenPath: string 
     deliverer,
     now,
     seenPath: opts.seenPath,
+    // Must be set: these runs are not dry, so without it the pipeline writes
+    // the discovery store into the real data/ directory.
+    discoveredPath: join(dirname(opts.seenPath), 'discovered.json'),
   });
   return { stats, delivered: deliverer.sent[0]?.jobs ?? [] };
 }
