@@ -6,7 +6,7 @@ import { createLogger } from './util/log.js';
 import { runPipeline } from './pipeline.js';
 import { allSources } from './sources/index.js';
 import { sampleSource } from './sources/sample.js';
-import { createConsoleDeliverer } from './deliver/console.js';
+import { chooseDeliverer } from './deliver/index.js';
 import { loadSponsorIndex } from './sponsorship.js';
 import type { Deliverer } from './types.js';
 
@@ -33,8 +33,8 @@ async function main(argv: string[]): Promise<number> {
   if (sponsorIndex) log.info('uk sponsor register loaded', { names: sponsorIndex.names.size });
   else log.debug('no uk sponsor register at data/uk-sponsors.csv; skipping that check');
 
-  // Live delivery arrives in milestone 6; until then every run prints.
-  const deliverer: Deliverer = createConsoleDeliverer();
+  const deliverer: Deliverer = chooseDeliverer(options, env, log);
+  log.debug('delivering via', { deliverer: deliverer.name });
 
   try {
     await runPipeline({
@@ -51,7 +51,15 @@ async function main(argv: string[]): Promise<number> {
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     log.error('run failed', { error: err.message });
-    await deliverer.deliverError(err, 'pipeline');
+    // The alert matters more than the original failure's exit path, but a
+    // failing alert must not mask the error that caused it.
+    try {
+      await deliverer.deliverError(err, 'pipeline');
+    } catch (alertError) {
+      log.error('could not send the failure alert', {
+        error: alertError instanceof Error ? alertError.message : String(alertError),
+      });
+    }
     return 1;
   }
 }
