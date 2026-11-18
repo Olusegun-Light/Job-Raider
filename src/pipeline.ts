@@ -1,9 +1,11 @@
+import { join } from 'node:path';
 import type { AppConfig, Env } from './config.js';
 import type { CliOptions } from './cli.js';
 import type { Logger } from './util/log.js';
 import type { Source, SourceContext } from './sources/index.js';
 import type { Deliverer, Job, RunStats, ScoredJob, SourceStats } from './types.js';
 import { bucketFor, jobText, passesFilter } from './filter.js';
+import { dropSeen, loadSeen, pruneSeen, recordSeen, saveSeen } from './dedupe.js';
 import { scoreJob } from './score.js';
 import { detectSponsorship, isLicensedSponsor, type SponsorIndex } from './sponsorship.js';
 
@@ -17,6 +19,10 @@ export type PipelineDeps = {
   now: Date;
   /** UK Home Office register, when data/uk-sponsors.csv is present. */
   sponsorIndex?: SponsorIndex | null;
+  /** Dedupe store location; defaults to data/seen.json. */
+  seenPath?: string;
+  /** How long a job stays remembered. */
+  retentionDays?: number;
 };
 
 type SourceOutcome = { stats: SourceStats; jobs: Job[]; credits?: number | undefined };
@@ -35,6 +41,9 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
   const { sources, config, options, env, log, deliverer, now } = deps;
   const sponsorIndex = deps.sponsorIndex ?? null;
   const minScore = options.minScore ?? config.rules.minScore;
+  const seenPath = deps.seenPath ?? join(process.cwd(), 'data', 'seen.json');
+  const retentionDays = deps.retentionDays ?? 60;
+  const seen = loadSeen(seenPath);
   const started = Date.now();
 
   const enabled = sources.filter((s) => options.sources.includes(s.name));
@@ -111,26 +120,41 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
   // a Serper hit on a Greenhouse board still belongs to the Serper run.
   const scored: ScoredJob[] = [];
   const perSource: SourceStats[] = [];
+  /** Which source produced each job, for the per-source "new" counts. */
+  const producedBy = new Map<ScoredJob, SourceStats['source']>();
   for (const result of results) {
     const jobs = result.jobs.map(evaluate).filter((job): job is ScoredJob => job !== null);
+    for (const job of jobs) producedBy.set(job, result.stats.source);
     result.stats.passedFilter = jobs.length;
     result.stats.new = jobs.length;
     perSource.push(result.stats);
     scored.push(...jobs);
   }
 
-  scored.sort((a, b) => b.score - a.score);
+  // Dedupe across sources and against previous runs, then rank.
+  const fresh = dropSeen(scored, seen);
+  for (const stats of perSource) {
+    stats.new = fresh.filter((job) => producedBy.get(job) === stats.source).length;
+  }
+  fresh.sort((a, b) => b.score - a.score);
 
   const stats: RunStats = {
     startedAt: new Date(started).toISOString(),
     durationMs: Date.now() - started,
     scanned: results.reduce((total, r) => total + r.jobs.length, 0),
-    delivered: scored.length,
+    delivered: fresh.length,
     perSource,
     serperCredits: credits.length > 0 ? credits.reduce((a, b) => a + b, 0) : null,
   };
 
-  await deliverer.deliver(scored, stats);
+  await deliverer.deliver(fresh, stats);
+
+  // --dry-run must never touch the store, so a dry run can be repeated.
+  if (options.dryRun) {
+    log.debug('dry run: seen.json left untouched', { path: seenPath });
+  } else {
+    saveSeen(seenPath, pruneSeen(recordSeen(seen, fresh, now), now, retentionDays));
+  }
 
   for (const s of perSource) {
     log.info('source summary', {

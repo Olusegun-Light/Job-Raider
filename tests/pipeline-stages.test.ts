@@ -179,6 +179,8 @@ describe('runPipeline filtering, sponsorship and scoring', () => {
     const lower = strong({
       id: 'low',
       url: 'https://x/low',
+      // A different role, so the fuzzy dedupe pass does not collapse the two.
+      title: 'Backend Engineer, Platform (Node.js)',
       description: 'TypeScript platform.',
       postedAt: null,
     });

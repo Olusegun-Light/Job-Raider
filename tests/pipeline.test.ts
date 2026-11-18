@@ -81,7 +81,14 @@ describe('runPipeline', () => {
     await run(
       [
         stubSource('greenhouse', [makeJob({ id: 'gh-1', url: 'https://x/1' })]),
-        stubSource('lever', [makeJob({ id: 'lv-1', url: 'https://x/2', source: 'lever' })]),
+        stubSource('lever', [
+          makeJob({
+            id: 'lv-1',
+            url: 'https://x/2',
+            source: 'lever',
+            title: 'Backend Engineer, Payments',
+          }),
+        ]),
       ],
       deliverer,
     );
