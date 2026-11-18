@@ -14,6 +14,9 @@ greenhouse:
   - tide # UK business banking
   - form3 # UK payments infrastructure
   - cleo # UK fintech, AI money assistant
+  - braze # London platform engineering
+  - fanaticsfbg # Fanatics Betting & Gaming, London platform roles
+  - grafanalabs # remote-first observability, large backend org
 
 lever:
   - spotify # audio, large backend org
@@ -29,3 +32,8 @@ ashby:
   - paddle # UK payments infrastructure
   - posthog # remote-first, open source
   - ramp # US fintech, large backend org
+  - iwoca.co.uk # UK SME lender, all-London backend team
+  - harmonic-security-inc # UK security startup, London hybrid
+  - notabene # crypto compliance, hires Remote - EMEA
+  - actcareers # high-volume board with UK engineering roles
+  - hozah # UK startup, remote engineering
