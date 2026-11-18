@@ -3,3 +3,8 @@ node_modules/
 .superpowers/
 *.log
 coverage/
+
+# The UK sponsor register is 10.4MB and gov.uk republishes it most working
+# days, so committing it would add ~10MB to history per refresh. The workflow
+# downloads it on each run instead; locally, `npm run update-sponsors`.
+data/uk-sponsors.csv

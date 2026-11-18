@@ -219,3 +219,21 @@ export function loadSponsorIndex(path: string): SponsorIndex | null {
     return null;
   }
 }
+
+/**
+ * The register's download URL, scraped from its gov.uk publication page.
+ *
+ * gov.uk publishes no stable URL for this file: the filename carries the
+ * release date and the path carries a content id, both of which change on
+ * every update (which is most working days). The publication page is the only
+ * stable entry point, so the current link has to be read off it.
+ */
+export function extractSponsorCsvUrl(html: string): string | null {
+  const pattern = /https:\/\/assets\.publishing\.service\.gov\.uk\/[^"'\s>\\]+?\.csv/gi;
+  const candidates = [...new Set(html.match(pattern) ?? [])];
+  if (candidates.length === 0) return null;
+
+  // Prefer the worker register itself when the page links other datasets.
+  const worker = candidates.find((url) => /worker/i.test(url));
+  return worker ?? candidates[0] ?? null;
+}

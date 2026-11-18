@@ -6,6 +6,7 @@ import type { Source, SourceContext } from './sources/index.js';
 import type { Deliverer, Job, RunStats, ScoredJob, SourceStats } from './types.js';
 import { bucketFor, jobText, passesFilter } from './filter.js';
 import { dropSeen, loadSeen, pruneSeen, recordSeen, saveSeen } from './dedupe.js';
+import { loadDiscovered, recordDiscovered, saveDiscovered } from './discovered.js';
 import { scoreJob } from './score.js';
 import { detectSponsorship, isLicensedSponsor, type SponsorIndex } from './sponsorship.js';
 
@@ -21,6 +22,8 @@ export type PipelineDeps = {
   sponsorIndex?: SponsorIndex | null;
   /** Dedupe store location; defaults to data/seen.json. */
   seenPath?: string;
+  /** Discovered-boards store; defaults to data/discovered.json. */
+  discoveredPath?: string;
   /** How long a job stays remembered. */
   retentionDays?: number;
 };
@@ -42,6 +45,7 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
   const sponsorIndex = deps.sponsorIndex ?? null;
   const minScore = options.minScore ?? config.rules.minScore;
   const seenPath = deps.seenPath ?? join(process.cwd(), 'data', 'seen.json');
+  const discoveredPath = deps.discoveredPath ?? join(process.cwd(), 'data', 'discovered.json');
   const retentionDays = deps.retentionDays ?? 60;
   const seen = loadSeen(seenPath);
   const started = Date.now();
@@ -154,6 +158,15 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
     log.debug('dry run: seen.json left untouched', { path: seenPath });
   } else {
     saveSeen(seenPath, pruneSeen(recordSeen(seen, fresh, now), now, retentionDays));
+
+    // Recorded from everything fetched, not just what was delivered: a board
+    // is worth polling directly even when today's posting from it was not a
+    // match. `npm run discover` reads this.
+    const allFetched = results.flatMap((r) => r.jobs);
+    saveDiscovered(
+      discoveredPath,
+      recordDiscovered(loadDiscovered(discoveredPath), allFetched, now),
+    );
   }
 
   for (const s of perSource) {

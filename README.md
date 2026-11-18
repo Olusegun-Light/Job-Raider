@@ -176,8 +176,21 @@ npm run update-sponsors
 ```
 
 Downloads the Home Office "Register of licensed sponsors: workers" to
-`data/uk-sponsors.csv`. Companies on it score +2 and show a 🏛️ badge. If the file is
-absent the check is skipped silently. Re-run it every month or two.
+`data/uk-sponsors.csv` (about 143,000 organisations, 10.4 MB). Companies on it score +2
+and show a 🏛️ badge. If the file is absent the check is skipped silently, so this is
+entirely optional.
+
+gov.uk publishes no stable URL for the register — the filename carries the release date
+and the path a content id, both of which change on most working days — so the script
+scrapes the current link off the
+[publication page](https://www.gov.uk/government/publications/register-of-licensed-sponsors-workers)
+each time. If gov.uk changes that page's layout, the script says so and exits non-zero
+rather than writing a truncated file.
+
+The CSV is **not committed** (10.4 MB, republished most working days, so each refresh
+would add another 10 MB to git history). The workflow downloads it on each run instead,
+in a `continue-on-error` step: the register only adds a scoring signal, so gov.uk being
+unreachable should not cost you the day's digest.
 
 ## Dedupe
 

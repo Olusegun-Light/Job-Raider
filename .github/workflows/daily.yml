@@ -40,6 +40,13 @@ jobs:
 
       - run: npm ci
 
+      - name: Refresh the UK sponsor register
+        # Not committed (10.4MB, republished most working days), so it is
+        # fetched per run. Non-fatal: it only adds a +2 scoring signal and a
+        # badge, and gov.uk being down must not cost us the whole digest.
+        continue-on-error: true
+        run: npm run update-sponsors
+
       - name: Run job radar
         env:
           SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
