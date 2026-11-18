@@ -8,7 +8,6 @@
 A Node.js + TypeScript CLI that runs once a day, finds **newly posted** backend engineering jobs, filters and scores them against my profile, drops any I've already seen, and sends me a digest on Telegram. It runs by itself on a GitHub Actions cron and can also be run by hand with `npm run jobs`.
 
 **About me (for the filters and scoring):**
-
 - Backend Engineer, Node.js/TypeScript, 4+ years (fintech, healthtech, telecom)
 - Based in Lagos, Nigeria (UTC+1)
 - Targets, in priority order:
@@ -71,10 +70,10 @@ Every source must output this shape:
 
 ```ts
 type Job = {
-  id: string; // stable hash of normalized URL
+  id: string;              // stable hash of normalized URL
   title: string;
   company: string;
-  url: string; // normalized: strip utm_*, ref, gh_src, trailing slashes
+  url: string;             // normalized: strip utm_*, ref, gh_src, trailing slashes
   location: string | null; // raw location text
   remote: boolean | null;
   postedAt: string | null; // ISO; null if unknown
@@ -93,7 +92,6 @@ type Job = {
 **Before writing each source, check its current public docs or response shape with a real request. Don't trust the endpoints below blindly.** Write a fixture from a real response into `tests/fixtures/` and test the parser against it.
 
 ### 5a. Serper.dev (Google results)
-
 - `POST https://google.serper.dev/search`, header `X-API-KEY`, JSON body `{ q, gl, num, tbs }`
 - Use `tbs: "qdr:d"` (past 24h) by default. Add a `--window=week` flag that switches to `qdr:w` for the first run or a catch-up run
 - `num: 20`, and fetch page 2 only if page 1 was full
@@ -102,18 +100,15 @@ type Job = {
 - Log how many credits were used per run
 
 ### 5b. Greenhouse
-
 - `GET https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true`
 - Use `updated_at` / `first_published` for `postedAt` when present
 - Description HTML is entity-encoded: decode, then strip tags
 
 ### 5c. Lever
-
 - `GET https://api.lever.co/v0/postings/{slug}?mode=json`
 - `createdAt` is epoch ms. `categories.location`, `workplaceType` → remote
 
 ### 5d. Ashby
-
 - `GET https://api.ashbyhq.com/posting-api/job-board/{slug}`
 - Use `publishedAt`, `location`, `isRemote`, `descriptionPlain`
 
@@ -122,48 +117,20 @@ type Job = {
 ## 6. Filtering, sponsorship and scoring
 
 ### Filter (`config/rules.yaml`)
-
 ```yaml
-titleInclude:
-  [
-    backend,
-    back-end,
-    'back end',
-    'software engineer',
-    'node',
-    'api engineer',
-    'platform engineer',
-    'full stack',
-    'fullstack',
-  ]
-titleExclude:
-  [
-    staff,
-    principal,
-    'head of',
-    director,
-    manager,
-    intern,
-    'front end',
-    frontend,
-    ios,
-    android,
-    'data scientist',
-    'machine learning',
-  ]
-mustMatchAny: [node, 'node.js', nodejs, typescript, javascript, nestjs, express] # checked in title+description/snippet
+titleInclude:   [backend, back-end, "back end", "software engineer", "node", "api engineer", "platform engineer", "full stack", "fullstack"]
+titleExclude:   [staff, principal, "head of", director, manager, intern, "front end", frontend, ios, android, "data scientist", "machine learning"]
+mustMatchAny:   [node, "node.js", nodejs, typescript, javascript, nestjs, express]   # checked in title+description/snippet
 locationTargets:
-  uk: [uk, 'united kingdom', london, manchester, edinburgh, england, scotland]
-  remote: [remote, emea, europe, 'anywhere', worldwide, africa, nigeria]
-  lagos: [lagos, nigeria]
+  uk:     [uk, "united kingdom", london, manchester, edinburgh, england, scotland]
+  remote: [remote, emea, europe, "anywhere", worldwide, africa, nigeria]
+  lagos:  [lagos, nigeria]
 maxAgeHours: 48
 ```
-
 - A job passes if the title matches `titleInclude`, doesn't match `titleExclude`, matches at least one `mustMatchAny` term (Serper jobs: check title + snippet and be lenient), and matches at least one location bucket.
 - "Senior" is **not** excluded. Many senior roles fit 4+ years.
 
 ### Sponsorship detection (`sponsorship.ts`)
-
 - Positive phrases → `yes`: "visa sponsorship", "sponsor your visa", "skilled worker visa", "we can sponsor", "relocation support", "sponsorship available"
 - Negative phrases → `no` (these take priority): "unable to sponsor", "cannot sponsor", "no sponsorship", "not able to offer sponsorship", "must have the right to work in the uk", "existing right to work"
 - Otherwise `unknown`
@@ -171,18 +138,17 @@ maxAgeHours: 48
 - UK jobs with `sponsorship: 'no'` are dropped by default (`--keep-no-sponsor` flag keeps them).
 
 ### Score (weights in rules.yaml)
-
-| Signal                                           | Points          |
-| ------------------------------------------------ | --------------- |
-| Title contains backend/back-end                  | +3              |
-| Node/TypeScript in title                         | +3              |
-| Node/TypeScript in description                   | +2              |
-| Sponsorship `yes`                                | +4              |
-| `ukSponsorLicensed` true                         | +2              |
-| Remote open to Nigeria/EMEA/anywhere             | +3              |
+| Signal | Points |
+|---|---|
+| Title contains backend/back-end | +3 |
+| Node/TypeScript in title | +3 |
+| Node/TypeScript in description | +2 |
+| Sponsorship `yes` | +4 |
+| `ukSponsorLicensed` true | +2 |
+| Remote open to Nigeria/EMEA/anywhere | +3 |
 | Domain match: fintech, payments, health, telecom | +1 each (max 2) |
-| Posted in last 24h                               | +1              |
-| "Senior" in title                                | 0 (neutral)     |
+| Posted in last 24h | +1 |
+| "Senior" in title | 0 (neutral) |
 
 Sort the digest by score (highest first). Drop anything under `minScore` (default 4).
 
@@ -226,7 +192,6 @@ npm run update-sponsors
 ## 10. Config seeds
 
 ### `config/queries.yaml`
-
 ```yaml
 queries:
   - name: uk-sponsor-ats
@@ -245,17 +210,14 @@ queries:
     q: '("backend engineer" OR "backend developer") ("node.js" OR typescript) Lagos (site:jobs.lever.co OR site:boards.greenhouse.io OR site:jobs.ashbyhq.com OR site:apply.workable.com OR site:linkedin.com/jobs)'
     gl: ng
 ```
-
 Keep it to about 5–10 queries so the daily credit use stays low. Log the credits per run.
 
 ### `config/companies.yaml`
-
 ```yaml
-greenhouse: [] # board slugs, e.g. from boards.greenhouse.io/{slug}
-lever: [] # e.g. jobs.lever.co/{slug}
-ashby: [] # e.g. jobs.ashbyhq.com/{slug}
+greenhouse: []   # board slugs, e.g. from boards.greenhouse.io/{slug}
+lever: []        # e.g. jobs.lever.co/{slug}
+ashby: []        # e.g. jobs.ashbyhq.com/{slug}
 ```
-
 Seed it with about 10 well-known UK fintech/healthtech companies whose slugs you **check really exist** with a live request. I'll add more over time.
 **Bonus helper:** `npm run discover` reads the ATS URLs that Serper returned over the last runs (store them in `data/discovered.json`) and suggests new company slugs to add.
 

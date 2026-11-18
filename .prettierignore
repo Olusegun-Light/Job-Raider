@@ -1,0 +1,5 @@
+# The build plan is the user's input document, not ours to reformat.
+JOB_RADAR_PLAN.md
+node_modules/
+data/
+.superpowers/
