@@ -124,11 +124,13 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
   // a Serper hit on a Greenhouse board still belongs to the Serper run.
   const scored: ScoredJob[] = [];
   const perSource: SourceStats[] = [];
-  /** Which source produced each job, for the per-source "new" counts. */
-  const producedBy = new Map<ScoredJob, SourceStats['source']>();
+  // Keyed by job id, not object identity: dedupe merges two records of one
+  // posting into a new object, which an identity-keyed map would lose from
+  // the per-source counts.
+  const producedBy = new Map<string, SourceStats['source']>();
   for (const result of results) {
     const jobs = result.jobs.map(evaluate).filter((job): job is ScoredJob => job !== null);
-    for (const job of jobs) producedBy.set(job, result.stats.source);
+    for (const job of jobs) producedBy.set(job.id, result.stats.source);
     result.stats.passedFilter = jobs.length;
     result.stats.new = jobs.length;
     perSource.push(result.stats);
@@ -138,7 +140,7 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
   // Dedupe across sources and against previous runs, then rank.
   const fresh = dropSeen(scored, seen);
   for (const stats of perSource) {
-    stats.new = fresh.filter((job) => producedBy.get(job) === stats.source).length;
+    stats.new = fresh.filter((job) => producedBy.get(job.id) === stats.source).length;
   }
   fresh.sort((a, b) => b.score - a.score);
 

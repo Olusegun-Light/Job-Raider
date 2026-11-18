@@ -196,6 +196,38 @@ describe('runPipeline dedupe and seen.json', () => {
     expect(stats.perSource[0]!.passedFilter).toBe(2);
   });
 
+  test('per-source new counts add up to the delivered total when a duplicate is merged', async () => {
+    // Merging two records of one posting produces a new object, so attributing
+    // counts by object identity silently loses the merged job from the
+    // per-source summary: delivered=17 but the rows summed to 16.
+    const path = seenPath();
+    const url = 'https://job-boards.greenhouse.io/monzo/jobs/7343996';
+
+    const { stats } = await run({
+      seenPath: path,
+      sources: [
+        source(
+          [
+            job({
+              id: 's1',
+              url: 'https://monzo.com/careers?gh_jid=7343996',
+              source: 'serper',
+              description: null,
+              snippet: 'Node.js',
+              company: 'Monzo',
+            }),
+          ],
+          'serper',
+        ),
+        source([job({ id: 'g1', url, source: 'greenhouse', company: 'Monzo' })], 'greenhouse'),
+      ],
+    });
+
+    const summed = stats.perSource.reduce((total, row) => total + row.new, 0);
+    expect(stats.delivered).toBe(1);
+    expect(summed).toBe(stats.delivered);
+  });
+
   test('does not record jobs when delivery throws, so they are retried tomorrow', async () => {
     // The core data-integrity invariant: a failed digest must cost duplicates,
     // never a job that is recorded as sent but never arrived.
