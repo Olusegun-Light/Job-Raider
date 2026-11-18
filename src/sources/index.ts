@@ -2,6 +2,9 @@ import type { AppConfig, Env } from '../config.js';
 import type { CliOptions } from '../cli.js';
 import type { Logger } from '../util/log.js';
 import type { Job, SourceName } from '../types.js';
+import { greenhouseSource } from './greenhouse.js';
+import { leverSource } from './lever.js';
+import { ashbySource } from './ashby.js';
 
 export type SourceContext = {
   config: AppConfig;
@@ -25,7 +28,8 @@ export type Source = {
   fetch(ctx: SourceContext): Promise<SourceResult>;
 };
 
-/** Milestone 1 placeholder: real sources are registered in milestones 2 and 3. */
+/** Every live source, in the order they appear in run summaries. */
 export function allSources(): Source[] {
-  return [];
+  // serperSource() is registered in milestone 3.
+  return [greenhouseSource(), leverSource(), ashbySource()];
 }

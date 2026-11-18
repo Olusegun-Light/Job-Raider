@@ -1,6 +1,30 @@
 # ATS board slugs polled directly (no Serper credits used).
-# greenhouse: boards.greenhouse.io/{slug}   lever: jobs.lever.co/{slug}   ashby: jobs.ashbyhq.com/{slug}
-# Seeded in milestone 2 with slugs verified against live boards.
-greenhouse: []
-lever: []
-ashby: []
+#   greenhouse: boards.greenhouse.io/{slug}
+#   lever:      jobs.lever.co/{slug}
+#   ashby:      jobs.ashbyhq.com/{slug}
+# Every slug below was verified against the live board API and returned jobs.
+# `npm run discover` suggests more from what Serper has seen.
+
+greenhouse:
+  - monzo # UK neobank
+  - wise # UK fintech, cross-border payments
+  - gocardless # UK fintech, bank payments
+  - tide # UK business banking
+  - form3 # UK payments infrastructure
+  - truelayer # UK open banking
+  - cleo # UK fintech, AI money assistant
+
+lever:
+  - spotify # audio, large backend org
+  - contentsquare # EU/UK analytics
+  - pigment # EU fintech-adjacent planning
+  - younited # EU consumer credit
+
+ashby:
+  - griffin # UK bank-as-a-service
+  - zilch # UK BNPL fintech
+  - teya # UK/EU payments
+  - sardine # fintech fraud/risk
+  - paddle # UK payments infrastructure
+  - posthog # remote-first, open source
+  - ramp # US fintech, large backend org
