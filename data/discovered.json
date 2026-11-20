@@ -5,6 +5,12 @@
     "count": 4,
     "lastSeen": "2026-11-19T15:06:49.828Z"
   },
+  "ashby:Snyk": {
+    "ats": "ashby",
+    "slug": "Snyk",
+    "count": 1,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
+  },
   "ashby:actcareers": {
     "ats": "ashby",
     "slug": "actcareers",
@@ -16,6 +22,12 @@
     "slug": "blp-digital",
     "count": 4,
     "lastSeen": "2026-11-18T12:35:56.715Z"
+  },
+  "ashby:cartesia": {
+    "ats": "ashby",
+    "slug": "cartesia",
+    "count": 2,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
   },
   "ashby:clera": {
     "ats": "ashby",
@@ -74,14 +86,20 @@
   "ashby:notabene": {
     "ats": "ashby",
     "slug": "notabene",
-    "count": 7,
-    "lastSeen": "2026-11-19T15:06:49.828Z"
+    "count": 8,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
   },
   "ashby:quo": {
     "ats": "ashby",
     "slug": "quo",
     "count": 3,
     "lastSeen": "2026-11-18T12:35:56.715Z"
+  },
+  "ashby:reap": {
+    "ats": "ashby",
+    "slug": "reap",
+    "count": 1,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
   },
   "ashby:second-nature": {
     "ats": "ashby",
@@ -146,8 +164,8 @@
   "greenhouse:deliveroo": {
     "ats": "greenhouse",
     "slug": "deliveroo",
-    "count": 1,
-    "lastSeen": "2026-11-19T15:06:49.828Z"
+    "count": 2,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
   },
   "greenhouse:fanaticsfbg": {
     "ats": "greenhouse",
@@ -170,20 +188,20 @@
   "greenhouse:mark43": {
     "ats": "greenhouse",
     "slug": "mark43",
-    "count": 1,
-    "lastSeen": "2026-11-19T15:06:49.828Z"
+    "count": 2,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
   },
   "greenhouse:minitab": {
     "ats": "greenhouse",
     "slug": "minitab",
-    "count": 3,
-    "lastSeen": "2026-11-18T12:35:56.715Z"
+    "count": 4,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
   },
   "greenhouse:monks": {
     "ats": "greenhouse",
     "slug": "monks",
-    "count": 1,
-    "lastSeen": "2026-11-19T15:06:49.828Z"
+    "count": 2,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
   },
   "greenhouse:netlify": {
     "ats": "greenhouse",
@@ -224,8 +242,8 @@
   "greenhouse:vercel": {
     "ats": "greenhouse",
     "slug": "vercel",
-    "count": 1,
-    "lastSeen": "2026-11-19T15:06:49.828Z"
+    "count": 2,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
   },
   "lever:coderio": {
     "ats": "lever",
@@ -236,8 +254,8 @@
   "lever:jobgether": {
     "ats": "lever",
     "slug": "jobgether",
-    "count": 9,
-    "lastSeen": "2026-11-19T15:06:49.828Z"
+    "count": 11,
+    "lastSeen": "2026-11-20T14:47:33.425Z"
   },
   "lever:spotify": {
     "ats": "lever",
