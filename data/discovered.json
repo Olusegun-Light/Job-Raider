@@ -2,8 +2,8 @@
   "ashby:Clera": {
     "ats": "ashby",
     "slug": "Clera",
-    "count": 1,
-    "lastSeen": "2026-11-21T14:03:36.467Z"
+    "count": 2,
+    "lastSeen": "2026-11-22T13:56:45.217Z"
   },
   "ashby:Kota": {
     "ats": "ashby",
@@ -46,6 +46,12 @@
     "slug": "clera",
     "count": 2,
     "lastSeen": "2026-11-18T12:35:56.715Z"
+  },
+  "ashby:clickup": {
+    "ats": "ashby",
+    "slug": "clickup",
+    "count": 1,
+    "lastSeen": "2026-11-22T13:56:45.217Z"
   },
   "ashby:dex": {
     "ats": "ashby",
@@ -122,8 +128,8 @@
   "ashby:second-nature": {
     "ats": "ashby",
     "slug": "second-nature",
-    "count": 2,
-    "lastSeen": "2026-11-19T15:06:49.828Z"
+    "count": 3,
+    "lastSeen": "2026-11-22T13:56:45.217Z"
   },
   "ashby:sparta-commodities": {
     "ats": "ashby",
@@ -176,8 +182,8 @@
   "greenhouse:cloudflare": {
     "ats": "greenhouse",
     "slug": "cloudflare",
-    "count": 1,
-    "lastSeen": "2026-11-19T15:06:49.828Z"
+    "count": 2,
+    "lastSeen": "2026-11-22T13:56:45.217Z"
   },
   "greenhouse:deliveroo": {
     "ats": "greenhouse",
@@ -230,8 +236,8 @@
   "greenhouse:okta": {
     "ats": "greenhouse",
     "slug": "okta",
-    "count": 8,
-    "lastSeen": "2026-11-21T14:03:36.467Z"
+    "count": 9,
+    "lastSeen": "2026-11-22T13:56:45.217Z"
   },
   "greenhouse:sayari": {
     "ats": "greenhouse",
