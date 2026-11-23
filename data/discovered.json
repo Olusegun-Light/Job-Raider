@@ -59,6 +59,12 @@
     "count": 2,
     "lastSeen": "2026-11-18T12:35:56.715Z"
   },
+  "ashby:fleek": {
+    "ats": "ashby",
+    "slug": "fleek",
+    "count": 2,
+    "lastSeen": "2026-11-23T17:11:19.973Z"
+  },
   "ashby:futurefitai": {
     "ats": "ashby",
     "slug": "futurefitai",
@@ -92,8 +98,8 @@
   "ashby:hozah": {
     "ats": "ashby",
     "slug": "hozah",
-    "count": 5,
-    "lastSeen": "2026-11-19T15:06:49.828Z"
+    "count": 6,
+    "lastSeen": "2026-11-23T17:11:19.973Z"
   },
   "ashby:iwoca.co.uk": {
     "ats": "ashby",
@@ -122,8 +128,8 @@
   "ashby:reap": {
     "ats": "ashby",
     "slug": "reap",
-    "count": 1,
-    "lastSeen": "2026-11-20T14:47:33.425Z"
+    "count": 2,
+    "lastSeen": "2026-11-23T17:11:19.973Z"
   },
   "ashby:second-nature": {
     "ats": "ashby",
@@ -236,14 +242,20 @@
   "greenhouse:okta": {
     "ats": "greenhouse",
     "slug": "okta",
-    "count": 9,
-    "lastSeen": "2026-11-22T13:56:45.217Z"
+    "count": 15,
+    "lastSeen": "2026-11-23T17:11:19.973Z"
   },
   "greenhouse:sayari": {
     "ats": "greenhouse",
     "slug": "sayari",
     "count": 2,
     "lastSeen": "2026-11-18T12:35:56.715Z"
+  },
+  "greenhouse:scaleai": {
+    "ats": "greenhouse",
+    "slug": "scaleai",
+    "count": 1,
+    "lastSeen": "2026-11-23T17:11:19.973Z"
   },
   "greenhouse:staffbase": {
     "ats": "greenhouse",
