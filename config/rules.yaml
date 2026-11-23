@@ -33,10 +33,218 @@ titleExclude:
 # Checked against title + description/snippet.
 mustMatchAny: [node, 'node.js', nodejs, typescript, javascript, nestjs, express]
 
+# Each key below is both a digest section and a visa-route group.
 locationTargets:
-  uk: [uk, 'united kingdom', london, manchester, edinburgh, england, scotland]
-  remote: [remote, emea, europe, 'anywhere', worldwide, africa, nigeria]
-  lagos: [lagos, nigeria]
+  # Top target. The only region with a licensed-sponsor register to check.
+  uk:
+    [
+      uk,
+      'united kingdom',
+      london,
+      manchester,
+      edinburgh,
+      glasgow,
+      birmingham,
+      leeds,
+      bristol,
+      cambridge,
+      oxford,
+      england,
+      scotland,
+      wales,
+    ]
+
+  # Open-remote scopes ONLY: terms that imply Nigeria is actually eligible.
+  # The bare word "remote" is deliberately absent - on its own it says nothing
+  # about which countries may apply, and treating it as a target is what let
+  # "Remote - United States" through as though it were reachable.
+  remote:
+    [
+      emea,
+      africa,
+      worldwide,
+      'anywhere',
+      global,
+      'any location',
+      'no preference',
+      'work from anywhere',
+      'location independent',
+    ]
+
+  lagos: [lagos, nigeria, abuja]
+
+  # EU/EEA + Switzerland: Blue Card, Dutch highly-skilled migrant, Irish
+  # critical skills permit and friends are all routine employer-sponsored
+  # routes for a backend engineer.
+  europe:
+    [
+      europe,
+      'european union',
+      ireland,
+      dublin,
+      netherlands,
+      amsterdam,
+      rotterdam,
+      utrecht,
+      germany,
+      berlin,
+      munich,
+      hamburg,
+      frankfurt,
+      cologne,
+      portugal,
+      lisbon,
+      porto,
+      spain,
+      madrid,
+      barcelona,
+      valencia,
+      poland,
+      warsaw,
+      krakow,
+      wroclaw,
+      czechia,
+      'czech republic',
+      prague,
+      estonia,
+      tallinn,
+      lithuania,
+      vilnius,
+      latvia,
+      riga,
+      sweden,
+      stockholm,
+      denmark,
+      copenhagen,
+      norway,
+      oslo,
+      finland,
+      helsinki,
+      switzerland,
+      zurich,
+      geneva,
+      austria,
+      vienna,
+      belgium,
+      brussels,
+      luxembourg,
+      malta,
+      france,
+      paris,
+      italy,
+      milan,
+      rome,
+      greece,
+      athens,
+      romania,
+      bucharest,
+      bulgaria,
+      sofia,
+      hungary,
+      budapest,
+      cyprus,
+    ]
+
+  gulf:
+    [
+      dubai,
+      uae,
+      'united arab emirates',
+      'abu dhabi',
+      qatar,
+      doha,
+      'saudi arabia',
+      riyadh,
+      jeddah,
+      bahrain,
+      manama,
+      kuwait,
+      oman,
+      muscat,
+    ]
+
+  apac:
+    [
+      singapore,
+      japan,
+      tokyo,
+      osaka,
+      australia,
+      sydney,
+      melbourne,
+      brisbane,
+      perth,
+      'new zealand',
+      auckland,
+      wellington,
+    ]
+
+  # Canada only. The US is excluded below: H-1B is a lottery, and a
+  # remote-US role means "must already be authorised to work in the US".
+  americas: [canada, toronto, vancouver, montreal, ottawa, calgary]
+
+  # Never reachable. Named explicitly so the code can tell
+  # "Remote - United States" from a bare "Remote"; without the name, an
+  # unlisted country reads as an unstated scope and passes as though open.
+  # Matching one of these demotes a job even when it also names a target
+  # region, which is what handles "Remote - US & Canada".
+  exclude:
+    [
+      'united states',
+      'united states of america',
+      usa,
+      'u.s.',
+      'us only',
+      'us-based',
+      'us remote',
+      brazil,
+      'sao paulo',
+      mexico,
+      argentina,
+      colombia,
+      chile,
+      peru,
+      latam,
+      'latin america',
+      india,
+      bengaluru,
+      bangalore,
+      mumbai,
+      hyderabad,
+      pune,
+      'new delhi',
+      gurugram,
+      noida,
+      pakistan,
+      bangladesh,
+      philippines,
+      manila,
+      indonesia,
+      jakarta,
+      vietnam,
+      hanoi,
+      thailand,
+      bangkok,
+      malaysia,
+      'kuala lumpur',
+      china,
+      shanghai,
+      beijing,
+      shenzhen,
+      'hong kong',
+      taiwan,
+      taipei,
+      'south korea',
+      seoul,
+      turkey,
+      istanbul,
+      israel,
+      'tel aviv',
+      russia,
+      moscow,
+      ukraine,
+      kyiv,
+    ]
 
 maxAgeHours: 48
 minScore: 4

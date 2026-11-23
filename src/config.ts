@@ -45,8 +45,32 @@ const rulesSchema = z.object({
   mustMatchAny: z.array(z.string().min(1)).min(1),
   locationTargets: z.object({
     uk: z.array(z.string().min(1)).default([]),
+    /**
+     * Open-remote scopes only - terms that imply Nigeria is eligible, such as
+     * EMEA or worldwide. The bare word "remote" deliberately does NOT belong
+     * here: on its own it says nothing about which countries may apply, and
+     * treating it as a target is what let "Remote - United States" through.
+     */
     remote: z.array(z.string().min(1)).default([]),
     lagos: z.array(z.string().min(1)).default([]),
+    /**
+     * Relocation regions, optional so a rules.yaml predating them still
+     * loads. Each is a digest section and a sponsorship-route group.
+     */
+    europe: z.array(z.string().min(1)).optional(),
+    gulf: z.array(z.string().min(1)).optional(),
+    apac: z.array(z.string().min(1)).optional(),
+    americas: z.array(z.string().min(1)).optional(),
+    /**
+     * Places that are never reachable, named so the code can tell
+     * "Remote - United States" from a bare "Remote". Without this list a
+     * country we simply never listed reads as an unstated scope, and a
+     * US-only remote role passes as though it were open to anyone.
+     *
+     * Matching one of these demotes a job even if it also matches a target
+     * region, which is what handles the common "Remote - US & Canada".
+     */
+    exclude: z.array(z.string().min(1)).optional(),
   }),
   maxAgeHours: z.number().positive().default(48),
   minScore: z.number().default(4),

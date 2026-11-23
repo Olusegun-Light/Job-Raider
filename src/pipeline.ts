@@ -4,7 +4,8 @@ import type { CliOptions } from './cli.js';
 import type { Logger } from './util/log.js';
 import type { Source, SourceContext } from './sources/index.js';
 import type { Deliverer, Job, RunStats, ScoredJob, SourceStats } from './types.js';
-import { bucketFor, jobText, passesFilter } from './filter.js';
+import { bucketFor, jobText, passesFilter, remoteScope } from './filter.js';
+import { assessReach } from './reach.js';
 import { dropSeen, loadSeen, pruneSeen, recordSeen, saveSeen } from './dedupe.js';
 import { loadDiscovered, recordDiscovered, saveDiscovered } from './discovered.js';
 import { scoreJob } from './score.js';
@@ -81,10 +82,10 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
 
   const credits = results.map((r) => r.credits).filter((c): c is number => c !== undefined);
   /**
-   * filter -> enrich (sponsorship, register) -> score -> cut.
+   * filter -> enrich (sponsorship, register) -> reach -> score -> cut.
    *
-   * A UK job that states it cannot sponsor is dropped by default: it is
-   * unreachable from Lagos however well it scores. --keep-no-sponsor keeps it.
+   * A job nobody in Lagos could take is dropped however well it scores: see
+   * assessReach for the two rules. --keep-unreachable keeps them.
    */
   const evaluate = (job: Job): ScoredJob | null => {
     const verdict = passesFilter(job, config.rules);
@@ -97,10 +98,16 @@ export async function runPipeline(deps: PipelineDeps): Promise<RunStats> {
     const sponsorship = detectSponsorship(jobText(job));
     const ukSponsorLicensed = sponsorIndex ? isLicensedSponsor(job.company, sponsorIndex) : null;
 
-    if (bucket === 'uk' && sponsorship === 'no' && !options.keepNoSponsor) {
-      log.debug('dropped: UK role states it cannot sponsor', {
+    const reach = assessReach({
+      bucket,
+      scope: remoteScope(job, config.rules.locationTargets),
+      sponsorship,
+    });
+    if (!reach.reachable && !options.keepUnreachable) {
+      log.debug('dropped: unreachable', {
         title: job.title,
         company: job.company,
+        reason: reach.reason,
       });
       return null;
     }

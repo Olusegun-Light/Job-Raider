@@ -8,7 +8,12 @@ export type CliOptions = {
   dryRun: boolean;
   window: TimeWindow;
   sources: SourceName[];
-  keepNoSponsor: boolean;
+  /**
+   * Keep roles that cannot realistically be applied to from Lagos: a region
+   * that states it cannot sponsor, or a remote role fenced into a country
+   * outside the targets. Useful for seeing what the rules are discarding.
+   */
+  keepUnreachable: boolean;
   /** Overrides rules.yaml minScore when given. */
   minScore: number | undefined;
 };
@@ -19,7 +24,8 @@ export const USAGE = `job-radar
   npm run jobs -- --dry-run          print to console, no Telegram, no state write
   npm run jobs -- --source=a,b       limit sources (${ALL_SOURCES.join(', ')})
   npm run jobs -- --window=week      widen the window (first run / catch-up)
-  npm run jobs -- --keep-no-sponsor  keep UK jobs that say they cannot sponsor
+  npm run jobs -- --keep-unreachable keep jobs needing a visa nobody offers
+                                     (alias: --keep-no-sponsor)
   npm run jobs -- --min-score=6      override the rules.yaml minScore
   npm run jobs -- --help`;
 
@@ -28,7 +34,7 @@ export function parseArgs(argv: string[]): CliOptions {
     dryRun: false,
     window: 'day',
     sources: [...ALL_SOURCES],
-    keepNoSponsor: false,
+    keepUnreachable: false,
     minScore: undefined,
   };
 
@@ -42,8 +48,11 @@ export function parseArgs(argv: string[]): CliOptions {
         opts.dryRun = true;
         break;
 
+      // --keep-no-sponsor is the original spelling, kept working because it
+      // is wired into the GitHub Actions dispatch input.
+      case '--keep-unreachable':
       case '--keep-no-sponsor':
-        opts.keepNoSponsor = true;
+        opts.keepUnreachable = true;
         break;
 
       case '--window': {

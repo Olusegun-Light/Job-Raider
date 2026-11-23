@@ -32,7 +32,7 @@ so it is safe to repeat as often as you like.
 | `npm run jobs -- --dry-run`                 | Print to the console. No Telegram, no state written                             |
 | `npm run jobs -- --window=week`             | Widen the window to 7 days (first run or catch-up)                              |
 | `npm run jobs -- --source=greenhouse,lever` | Only run some sources (`serper`, `greenhouse`, `lever`, `ashby`)                |
-| `npm run jobs -- --keep-no-sponsor`         | Keep UK roles that state they cannot sponsor                                    |
+| `npm run jobs -- --keep-unreachable`        | Keep roles needing a visa nobody offers (alias: `--keep-no-sponsor`)            |
 | `npm run jobs -- --min-score=6`             | Override the `minScore` in `rules.yaml`                                         |
 | `npm run jobs -- --sample`                  | Run the pipeline over built-in fake jobs; no network, no keys                   |
 | `npm run update-sponsors`                   | Download the UK sponsor register into `data/uk-sponsors.csv`                    |
@@ -104,8 +104,17 @@ run with the file and field named, rather than silently doing nothing.
 - `titleInclude` / `titleExclude` — a job must match an include term and no exclude term.
   **"senior" is deliberately not excluded**: plenty of senior roles fit 4+ years.
 - `mustMatchAny` — stack keywords, checked against title + description.
-- `locationTargets` — the `uk` / `remote` / `lagos` buckets, which also become the digest
-  sections. A job matching none of them is dropped.
+- `locationTargets` — the region buckets, which also become the digest sections:
+  `uk`, `remote`, `lagos`, `europe`, `gulf`, `apac`, `americas` (Canada only). A job
+  matching none of them is dropped.
+  - `remote` holds **open-remote scopes only** — terms implying Nigeria is eligible
+    (`emea`, `africa`, `worldwide`, `anywhere`). The bare word "remote" is deliberately
+    absent: on its own it says nothing about who may apply, and treating it as a target is
+    what let "Remote - United States" through as though it were reachable.
+  - `exclude` names places that are never reachable (the US, LATAM, India, SEA, …). It
+    exists so the code can tell `Remote - United States` from a bare `Remote`; without the
+    name, an unlisted country reads as an unstated scope and passes. Matching it demotes a
+    job even when it also names a target region, which handles `Remote - US & Canada`.
 - `maxAgeHours` (default 48) — how recent an ATS posting must be.
 - `minScore` (default 4) — the cut.
 - `weights` — the scoring table below.
@@ -167,7 +176,20 @@ That ordering matters more than it looks: "we cannot offer visa sponsorship" con
 literal string "visa sponsorship", so a naive check reads it as a yes and recommends a
 job that is unreachable without sponsorship.
 
-UK roles that say `no` are dropped unless you pass `--keep-no-sponsor`.
+### Reachability
+
+A job is dropped — however well it scores — when nobody in Lagos could take it. Two
+rules, in `src/reach.ts`:
+
+1. **A remote role fenced into a region outside the targets.** "Remote - United States"
+   is remote in name only: it means "must already be authorised to work in the US", and
+   nobody sponsors a visa for a remote hire. An explicit sponsorship offer overrides this.
+2. **A role in a visa region that states it cannot sponsor.** Deliberately lenient:
+   silence is not a refusal, and plenty of UK and EU employers sponsor without
+   advertising it, so only an explicit "no" drops the job.
+
+Lagos roles and genuinely open-remote roles need neither test. Pass
+`--keep-unreachable` to see what the rules are discarding.
 
 ### The UK sponsor register (optional)
 

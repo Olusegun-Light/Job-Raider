@@ -11,8 +11,8 @@ on:
         type: choice
         options: [day, week]
         default: day
-      keep_no_sponsor:
-        description: 'Keep UK roles that state they cannot sponsor'
+      keep_unreachable:
+        description: 'Keep roles needing a visa nobody offers (debugging the filters)'
         type: boolean
         default: false
 
@@ -56,7 +56,7 @@ jobs:
         run: |
           npm run jobs -- \
             --window=${{ inputs.window || 'day' }} \
-            ${{ inputs.keep_no_sponsor && '--keep-no-sponsor' || '' }}
+            ${{ inputs.keep_unreachable && '--keep-unreachable' || '' }}
 
       - name: Commit the run state if it changed
         # Runs even when the radar step failed, because the register refresh or

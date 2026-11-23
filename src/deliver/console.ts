@@ -1,9 +1,25 @@
 import type { Deliverer, LocationBucket, RunStats, ScoredJob } from '../types.js';
 
+/**
+ * Digest sections, most reachable first.
+ *
+ * UK leads because it is the stated top target and the only region with a
+ * licensed-sponsor register to check against. Open remote and Lagos follow,
+ * as neither needs a visa. Then the relocation regions in rough order of how
+ * routine employer sponsorship is for a Nigerian backend engineer.
+ *
+ * Every LocationBucket must appear here exactly once: a bucket with no
+ * section would be counted as delivered, recorded in seen.json, and never
+ * shown to anyone.
+ */
 export const SECTIONS: { bucket: LocationBucket; label: string }[] = [
   { bucket: 'uk', label: '🇬🇧 UK + sponsorship' },
   { bucket: 'remote', label: '🌍 Remote' },
   { bucket: 'lagos', label: '🇳🇬 Lagos' },
+  { bucket: 'europe', label: '🇪🇺 Europe' },
+  { bucket: 'gulf', label: '🕌 Gulf' },
+  { bucket: 'apac', label: '🌏 APAC' },
+  { bucket: 'americas', label: '🍁 Canada' },
   { bucket: 'other', label: 'Other' },
 ];
 

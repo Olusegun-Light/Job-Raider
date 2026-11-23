@@ -1,6 +1,19 @@
 # Boolean Google queries run through Serper.dev (never google.com directly).
-# Keep this list to ~5-10 queries so daily credit use stays low.
+#
+# One query per visa route rather than one per country: the routes are what
+# decide whether a role is reachable from Lagos, and grouping neighbours keeps
+# credit use down. ~22 queries at ~1.4 credits each is ~31 credits a run,
+# roughly 930 a month.
+#
+# Every query is pinned to ATS domains with site: operators, so results are
+# real job pages rather than aggregator reposts. Keep `num` at 10: the free
+# tier rejects more alongside site: operators, and charges 2 credits for it.
+#
+# No query is left geography-free. An unscoped "remote" query pulls in
+# US-only roles, which the exclude list in rules.yaml then has to throw away
+# after they have already cost a credit.
 queries:
+  # ---------------------------------------------------------------- UK ------
   - name: uk-sponsor-ats
     q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com) ("backend engineer" OR "backend developer" OR "software engineer") ("node.js" OR nodejs OR typescript) ("visa sponsorship" OR "skilled worker visa") (London OR UK OR "United Kingdom")'
     gl: uk
@@ -9,14 +22,91 @@ queries:
     q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) "backend" ("node.js" OR typescript) (London OR "United Kingdom")'
     gl: uk
 
+  # ------------------------------------------------------------- Europe -----
+  - name: ireland
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer" OR "software engineer") ("node.js" OR typescript) (Dublin OR Ireland)'
+    gl: ie
+
+  - name: netherlands
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer" OR "software engineer") ("node.js" OR typescript) (Amsterdam OR Netherlands OR Utrecht OR Rotterdam)'
+    gl: nl
+
+  - name: germany
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer" OR "software engineer") ("node.js" OR typescript) (Berlin OR Munich OR Hamburg OR Germany)'
+    gl: de
+
+  - name: nordics
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) (Stockholm OR Sweden OR Copenhagen OR Denmark OR Oslo OR Norway OR Helsinki OR Finland)'
+    gl: se
+
+  - name: iberia
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) (Lisbon OR Portugal OR Madrid OR Barcelona OR Spain)'
+    gl: es
+
+  - name: central-eastern-europe
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) (Warsaw OR Krakow OR Poland OR Prague OR Czechia OR Tallinn OR Estonia OR Vilnius OR Lithuania)'
+    gl: pl
+
+  - name: alpine
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) (Zurich OR Geneva OR Switzerland OR Vienna OR Austria)'
+    gl: ch
+
+  - name: benelux-other
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) (Brussels OR Belgium OR Luxembourg)'
+    gl: be
+
+  - name: france-italy
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) (Paris OR France OR Milan OR Italy)'
+    gl: fr
+
+  # Europe-wide, aimed at the sponsorship wording rather than a city.
+  - name: eu-visa-sponsorship
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) ("visa sponsorship" OR "relocation package" OR "relocation support" OR "blue card") (Europe OR Germany OR Netherlands OR Portugal OR Poland)'
+    gl: de
+
+  # --------------------------------------------------------------- Gulf -----
+  - name: gulf
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer" OR "software engineer") ("node.js" OR typescript) (Dubai OR UAE OR "Abu Dhabi" OR Doha OR Qatar OR Riyadh OR "Saudi Arabia")'
+    gl: ae
+
+  # --------------------------------------------------------------- APAC -----
+  - name: singapore
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer" OR "software engineer") ("node.js" OR typescript) Singapore'
+    gl: sg
+
+  - name: japan
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer" OR "software engineer") ("node.js" OR typescript) (Tokyo OR Japan)'
+    gl: jp
+
+  - name: australia-nz
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) (Sydney OR Melbourne OR Australia OR "New Zealand" OR Auckland)'
+    gl: au
+
+  # ------------------------------------------------------------- Canada -----
+  - name: canada
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) ("visa sponsorship" OR "work permit" OR LMIA OR relocation) (Toronto OR Vancouver OR Canada)'
+    gl: ca
+
+  # ------------------------------------------- Remote, open to Nigeria ------
   - name: remote-emea
-    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) (remote) (EMEA OR Africa OR worldwide OR anywhere)'
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) remote (EMEA OR "Europe, Middle East")'
     gl: us
 
+  - name: remote-africa
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) remote (Africa OR Nigeria OR "Sub-Saharan")'
+    gl: ng
+
+  - name: remote-worldwide
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com OR site:apply.workable.com) ("backend engineer" OR "backend developer") ("node.js" OR typescript) remote (worldwide OR "work from anywhere" OR "anywhere in the world" OR "fully distributed")'
+    gl: us
+
+  # Scoped to EMEA on purpose: unscoped, this query was the main source of
+  # US-only remote roles that the exclude list then had to discard.
   - name: remote-fintech
-    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com) backend ("node.js" OR typescript) (fintech OR payments) remote'
+    q: '(site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.lever.co OR site:jobs.ashbyhq.com) backend ("node.js" OR typescript) (fintech OR payments) remote (EMEA OR Europe OR Africa OR worldwide)'
     gl: us
 
+  # -------------------------------------------------------------- Lagos -----
   - name: lagos
     q: '("backend engineer" OR "backend developer") ("node.js" OR typescript) Lagos (site:jobs.lever.co OR site:job-boards.greenhouse.io OR site:boards.greenhouse.io OR site:jobs.ashbyhq.com OR site:apply.workable.com OR site:linkedin.com/jobs)'
     gl: ng

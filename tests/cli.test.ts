@@ -7,7 +7,7 @@ describe('parseArgs', () => {
       dryRun: false,
       window: 'day',
       sources: ['serper', 'greenhouse', 'lever', 'ashby'],
-      keepNoSponsor: false,
+      keepUnreachable: false,
       minScore: undefined,
     });
   });
@@ -32,8 +32,12 @@ describe('parseArgs', () => {
     expect(() => parseArgs(['--window=decade'])).toThrow(/window/);
   });
 
-  test('recognises --keep-no-sponsor', () => {
-    expect(parseArgs(['--keep-no-sponsor']).keepNoSponsor).toBe(true);
+  test('recognises --keep-unreachable', () => {
+    expect(parseArgs(['--keep-unreachable']).keepUnreachable).toBe(true);
+  });
+
+  test('still recognises the older --keep-no-sponsor spelling', () => {
+    expect(parseArgs(['--keep-no-sponsor']).keepUnreachable).toBe(true);
   });
 
   test('reads a numeric --min-score override', () => {

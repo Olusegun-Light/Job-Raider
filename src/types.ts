@@ -3,7 +3,20 @@ export type SourceName = 'serper' | 'greenhouse' | 'lever' | 'ashby';
 export type SponsorshipVerdict = 'yes' | 'no' | 'unknown';
 
 /** Which location bucket a job landed in. Drives the digest sections. */
-export type LocationBucket = 'uk' | 'remote' | 'lagos' | 'other';
+export type LocationBucket =
+  'uk' | 'remote' | 'lagos' | 'europe' | 'gulf' | 'apac' | 'americas' | 'other';
+
+/**
+ * Buckets that require moving country, and therefore a work visa. The
+ * sponsorship rules apply to these and not to `lagos` or `remote`.
+ */
+export const RELOCATION_BUCKETS = ['uk', 'europe', 'gulf', 'apac', 'americas'] as const;
+
+export type RelocationBucket = (typeof RELOCATION_BUCKETS)[number];
+
+export function isRelocationBucket(bucket: LocationBucket): bucket is RelocationBucket {
+  return (RELOCATION_BUCKETS as readonly string[]).includes(bucket);
+}
 
 /** The normalized job every source must produce (JOB_RADAR_PLAN.md §4). */
 export type Job = {

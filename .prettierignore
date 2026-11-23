@@ -1,5 +1,10 @@
 # The build plan is the user's input document, not ours to reformat.
 JOB_RADAR_PLAN.md
+
+# Captured verbatim from the live ATS APIs. Their whole value is being exactly
+# what the API returned, so reformatting them destroys the evidence that the
+# parsers handle the real payload shape.
+tests/fixtures/
 node_modules/
 data/
 .superpowers/
