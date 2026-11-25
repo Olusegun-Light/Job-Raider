@@ -59,6 +59,12 @@
     "count": 2,
     "lastSeen": "2026-11-18T12:35:56.715Z"
   },
+  "ashby:docker": {
+    "ats": "ashby",
+    "slug": "docker",
+    "count": 1,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
+  },
   "ashby:fleek": {
     "ats": "ashby",
     "slug": "fleek",
@@ -80,8 +86,8 @@
   "ashby:gismart": {
     "ats": "ashby",
     "slug": "gismart",
-    "count": 2,
-    "lastSeen": "2026-11-24T16:52:41.901Z"
+    "count": 3,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
   },
   "ashby:going": {
     "ats": "ashby",
@@ -104,8 +110,8 @@
   "ashby:hozah": {
     "ats": "ashby",
     "slug": "hozah",
-    "count": 7,
-    "lastSeen": "2026-11-24T16:52:41.901Z"
+    "count": 8,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
   },
   "ashby:iwoca.co.uk": {
     "ats": "ashby",
@@ -119,11 +125,29 @@
     "count": 3,
     "lastSeen": "2026-11-18T12:35:56.715Z"
   },
+  "ashby:monumental": {
+    "ats": "ashby",
+    "slug": "monumental",
+    "count": 1,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
+  },
   "ashby:notabene": {
     "ats": "ashby",
     "slug": "notabene",
     "count": 8,
     "lastSeen": "2026-11-20T14:47:33.425Z"
+  },
+  "ashby:pleo": {
+    "ats": "ashby",
+    "slug": "pleo",
+    "count": 2,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
+  },
+  "ashby:polarsteps": {
+    "ats": "ashby",
+    "slug": "polarsteps",
+    "count": 1,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
   },
   "ashby:quo": {
     "ats": "ashby",
@@ -179,6 +203,12 @@
     "count": 1,
     "lastSeen": "2026-11-19T15:06:49.828Z"
   },
+  "greenhouse:Flexport": {
+    "ats": "greenhouse",
+    "slug": "Flexport",
+    "count": 2,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
+  },
   "greenhouse:aircallioinc": {
     "ats": "greenhouse",
     "slug": "aircallioinc",
@@ -194,8 +224,14 @@
   "greenhouse:cloudflare": {
     "ats": "greenhouse",
     "slug": "cloudflare",
-    "count": 3,
-    "lastSeen": "2026-11-24T16:52:41.901Z"
+    "count": 7,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
+  },
+  "greenhouse:dataiku": {
+    "ats": "greenhouse",
+    "slug": "dataiku",
+    "count": 1,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
   },
   "greenhouse:deliveroo": {
     "ats": "greenhouse",
@@ -212,8 +248,8 @@
   "greenhouse:flexport": {
     "ats": "greenhouse",
     "slug": "flexport",
-    "count": 1,
-    "lastSeen": "2026-11-24T16:52:41.901Z"
+    "count": 2,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
   },
   "greenhouse:gitlab": {
     "ats": "greenhouse",
@@ -251,11 +287,23 @@
     "count": 2,
     "lastSeen": "2026-11-19T15:06:49.828Z"
   },
+  "greenhouse:newsweek": {
+    "ats": "greenhouse",
+    "slug": "newsweek",
+    "count": 1,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
+  },
+  "greenhouse:ninjaone": {
+    "ats": "greenhouse",
+    "slug": "ninjaone",
+    "count": 2,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
+  },
   "greenhouse:okta": {
     "ats": "greenhouse",
     "slug": "okta",
-    "count": 23,
-    "lastSeen": "2026-11-24T16:52:41.901Z"
+    "count": 27,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
   },
   "greenhouse:sayari": {
     "ats": "greenhouse",
@@ -268,6 +316,12 @@
     "slug": "scaleai",
     "count": 1,
     "lastSeen": "2026-11-23T17:11:19.973Z"
+  },
+  "greenhouse:speechify": {
+    "ats": "greenhouse",
+    "slug": "speechify",
+    "count": 1,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
   },
   "greenhouse:staffbase": {
     "ats": "greenhouse",
@@ -293,6 +347,12 @@
     "count": 1,
     "lastSeen": "2026-11-19T15:06:49.828Z"
   },
+  "greenhouse:togetherai": {
+    "ats": "greenhouse",
+    "slug": "togetherai",
+    "count": 1,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
+  },
   "greenhouse:vercel": {
     "ats": "greenhouse",
     "slug": "vercel",
@@ -305,11 +365,17 @@
     "count": 2,
     "lastSeen": "2026-11-18T12:35:56.715Z"
   },
+  "lever:entrata": {
+    "ats": "lever",
+    "slug": "entrata",
+    "count": 1,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
+  },
   "lever:jobgether": {
     "ats": "lever",
     "slug": "jobgether",
-    "count": 11,
-    "lastSeen": "2026-11-20T14:47:33.425Z"
+    "count": 15,
+    "lastSeen": "2026-11-25T16:41:12.754Z"
   },
   "lever:spotify": {
     "ats": "lever",
