@@ -2,8 +2,8 @@
   "ashby:Clera": {
     "ats": "ashby",
     "slug": "Clera",
-    "count": 2,
-    "lastSeen": "2026-11-22T13:56:45.217Z"
+    "count": 3,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
   },
   "ashby:Kota": {
     "ats": "ashby",
@@ -44,8 +44,8 @@
   "ashby:clera": {
     "ats": "ashby",
     "slug": "clera",
-    "count": 2,
-    "lastSeen": "2026-11-18T12:35:56.715Z"
+    "count": 3,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
   },
   "ashby:clickup": {
     "ats": "ashby",
@@ -107,6 +107,12 @@
     "count": 2,
     "lastSeen": "2026-11-18T12:35:56.715Z"
   },
+  "ashby:heidihealth.com.au": {
+    "ats": "ashby",
+    "slug": "heidihealth.com.au",
+    "count": 1,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
+  },
   "ashby:hozah": {
     "ats": "ashby",
     "slug": "hozah",
@@ -118,6 +124,12 @@
     "slug": "iwoca.co.uk",
     "count": 2,
     "lastSeen": "2026-11-18T12:35:56.715Z"
+  },
+  "ashby:latamcent": {
+    "ats": "ashby",
+    "slug": "latamcent",
+    "count": 1,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
   },
   "ashby:lupapets": {
     "ats": "ashby",
@@ -140,8 +152,8 @@
   "ashby:pleo": {
     "ats": "ashby",
     "slug": "pleo",
-    "count": 2,
-    "lastSeen": "2026-11-25T16:41:12.754Z"
+    "count": 5,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
   },
   "ashby:polarsteps": {
     "ats": "ashby",
@@ -176,8 +188,8 @@
   "ashby:speak": {
     "ats": "ashby",
     "slug": "speak",
-    "count": 3,
-    "lastSeen": "2026-11-18T12:35:56.715Z"
+    "count": 4,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
   },
   "ashby:taktile": {
     "ats": "ashby",
@@ -224,8 +236,8 @@
   "greenhouse:cloudflare": {
     "ats": "greenhouse",
     "slug": "cloudflare",
-    "count": 7,
-    "lastSeen": "2026-11-25T16:41:12.754Z"
+    "count": 9,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
   },
   "greenhouse:dataiku": {
     "ats": "greenhouse",
@@ -290,8 +302,8 @@
   "greenhouse:newsweek": {
     "ats": "greenhouse",
     "slug": "newsweek",
-    "count": 1,
-    "lastSeen": "2026-11-25T16:41:12.754Z"
+    "count": 2,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
   },
   "greenhouse:ninjaone": {
     "ats": "greenhouse",
@@ -302,8 +314,8 @@
   "greenhouse:okta": {
     "ats": "greenhouse",
     "slug": "okta",
-    "count": 27,
-    "lastSeen": "2026-11-25T16:41:12.754Z"
+    "count": 33,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
   },
   "greenhouse:sayari": {
     "ats": "greenhouse",
@@ -353,6 +365,12 @@
     "count": 1,
     "lastSeen": "2026-11-25T16:41:12.754Z"
   },
+  "greenhouse:twilio": {
+    "ats": "greenhouse",
+    "slug": "twilio",
+    "count": 1,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
+  },
   "greenhouse:vercel": {
     "ats": "greenhouse",
     "slug": "vercel",
@@ -374,8 +392,8 @@
   "lever:jobgether": {
     "ats": "lever",
     "slug": "jobgether",
-    "count": 15,
-    "lastSeen": "2026-11-25T16:41:12.754Z"
+    "count": 17,
+    "lastSeen": "2026-11-26T16:14:59.567Z"
   },
   "lever:spotify": {
     "ats": "lever",
